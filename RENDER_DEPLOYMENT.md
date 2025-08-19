@@ -9,8 +9,8 @@
 3. **Create a new Web Service**:
    - **Name**: `ai-post-report-backend`
    - **Environment**: `Python 3`
-   - **Build Command**: `./build.sh`
-   - **Start Command**: `./start.sh`
+   - **Build Command**: `pip install --upgrade pip && pip install -r requirements.txt`
+   - **Start Command**: `uvicorn backend.main:app --host 0.0.0.0 --port $PORT`
    - **Auto-Deploy**: `Yes`
 
 4. **Add Environment Variables**:
