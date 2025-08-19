@@ -7,7 +7,7 @@ console.log('AI Post Report JavaScript loaded successfully!');
 
 class AIPostReport {
     constructor() {
-        this.apiBaseUrl = 'http://localhost:8000'; // FastAPI backend URL
+        this.apiBaseUrl = 'http://localhost:8000'; // FastAPI backend URL - change for production
         this.fileInput = document.getElementById('ai-audio-file');
         this.uploadBtn = document.getElementById('ai-audio-upload-btn');
         this.statusEl = document.getElementById('ai-status');
@@ -25,6 +25,7 @@ class AIPostReport {
         
         this.isProcessing = false;
         this.abortController = null;
+        this.isDemoOnly = window.location.hostname === 'qstaley921.github.io' || window.location.hostname.includes('github.io');
         
         this.init();
     }
@@ -39,7 +40,13 @@ class AIPostReport {
         this.uploadBtn.addEventListener('click', () => this.handleUploadClick());
         this.fileInput.addEventListener('change', () => this.handleFileSelect());
         
-        this.updateStatus('No audio uploaded yet.');
+        // Show appropriate status based on hosting
+        if (this.isDemoOnly) {
+            this.updateStatus('🌐 GitHub Pages Demo - UI preview only. Backend integration requires local setup or cloud deployment.');
+        } else {
+            this.updateStatus('No audio uploaded yet.');
+        }
+        
         console.log('AI Post Report initialized successfully');
     }
     
@@ -60,6 +67,12 @@ class AIPostReport {
     
     async processAudioFile(file) {
         try {
+            // Check if this is GitHub Pages demo
+            if (this.isDemoOnly) {
+                this.showGitHubPagesDemo(file);
+                return;
+            }
+            
             this.isProcessing = true;
             this.updateUploadButton('Processing...', true);
             this.hideError();
@@ -88,6 +101,64 @@ class AIPostReport {
             this.isProcessing = false;
             this.updateUploadButton('Choose Audio File', false);
         }
+    }
+    
+    async showGitHubPagesDemo(file) {
+        this.isProcessing = true;
+        this.updateUploadButton('Demo Mode...', true);
+        this.hideError();
+        this.resetProgress();
+        
+        // Simulate the full process for demo
+        this.updateStatus(`📁 Demo: Processing ${file.name}...`);
+        
+        // Step 1: Upload
+        this.setStepActive('upload');
+        this.updateProgress(25);
+        this.updateStatus('📤 Demo: Uploading audio file...');
+        await this.simulateDelay(800);
+        
+        // Step 2: Transcribe
+        this.setStepActive('transcribe');
+        this.updateProgress(50);
+        this.updateStatus('🎤 Demo: Transcribing audio with AI... (This is a simulation)');
+        await this.simulateDelay(2000);
+        
+        // Step 3: Analyze
+        this.setStepActive('analyze');
+        this.updateProgress(75);
+        this.updateStatus('🧠 Demo: Analyzing content and organizing... (This is a simulation)');
+        await this.simulateDelay(1500);
+        
+        // Step 4: Complete
+        this.setStepActive('complete');
+        this.updateProgress(100);
+        this.updateStatus('✅ Demo: Filling form fields with sample data...');
+        
+        // Inject demo data
+        this.injectDemoData();
+        
+        this.updateStatus('🌟 Demo complete! This shows how the AI would populate the form. For real functionality, deploy the backend or run locally.');
+        this.isProcessing = false;
+        this.updateUploadButton('Choose Audio File', false);
+    }
+    
+    injectDemoData() {
+        const demoData = {
+            postost_wins: "1. Preston Location: Increased baseline since 2023; 30 → 32. +20% since starting.\n2. Raleigh Location: New front desk team members including Rachel (former HR manager) who did great in role-playing and engaging.\n3. Successful Invisalign open house with 21/21 patients arriving and starting treatment in a single day.",
+            
+            client_goals: "1. Preston: NP Baseline 32; NP Goal 35. No referral goal currently set.\n2. Incentives are in place across both locations.\n3. Dr. Kashyap gives an extra $100 incentive when team members first certify (only at the Raleigh location).",
+            
+            postost_holdbacks: "1. Craig, their office manager, was not as engaged as hoped. He alternated between Doug's PP training and this 5-Star training.\n2. We did not get commitments from Craig at the end of the day because he was not present for the wrap-up session.\n3. Trainer doesn't feel good about the implementation due to lack of management engagement.",
+            
+            human_capital: "1. Set - they have enough team members to handle current capacity.\n2. Preston: Two new team members: Yessica and Tiffany; Tiffany was performing better.\n3. Raleigh: Expanded from only Trisha to include Rachael, Trisha, and Latoya.",
+            
+            marketing: "1. Paola manages their marketing operations.\n2. They recently had a stellar Invisalign open-house with a special promotion.\n3. 21/21 patients arrived and started treatment in a single day - majorly impressive result.",
+            
+            space_and_equipment: "1. Raleigh: 5 Ops; not enough space and not renovated; looking to purchase building.\n2. Preston: 7 ops; enough space; scheduling within 1 week turnaround time."
+        };
+        
+        this.injectReportData(demoData);
     }
     
     async uploadAndProcess(file) {
