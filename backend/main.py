@@ -44,8 +44,6 @@ try:
         # Using legacy OpenAI API (v0.28.0) which doesn't have httpx issues
         import openai
         openai.api_key = OPENAI_API_KEY
-        # Test the connection with a simple API call
-        openai.Model.list()
         openai_client = openai  # Use the module directly
         print("✅ OpenAI legacy client initialized successfully")
     else:
