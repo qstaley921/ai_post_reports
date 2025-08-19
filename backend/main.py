@@ -41,8 +41,13 @@ UPLOAD_DIR.mkdir(exist_ok=True)
 openai_client = None
 try:
     if OPENAI_API_KEY and OPENAI_API_KEY.strip():
-        openai_client = openai.OpenAI(api_key=OPENAI_API_KEY)
-        print("✅ OpenAI client initialized successfully")
+        # Using legacy OpenAI API (v0.28.0) which doesn't have httpx issues
+        import openai
+        openai.api_key = OPENAI_API_KEY
+        # Test the connection with a simple API call
+        openai.Model.list()
+        openai_client = openai  # Use the module directly
+        print("✅ OpenAI legacy client initialized successfully")
     else:
         print("⚠️  OPENAI_API_KEY not found or empty - demo mode will be used")
 except Exception as e:
@@ -149,7 +154,8 @@ async def transcribe_audio(file_path: str) -> str:
             """
         
         with open(file_path, "rb") as audio_file:
-            transcript = openai_client.audio.transcriptions.create(
+            # Using legacy OpenAI API (v0.28.0)
+            transcript = openai_client.Audio.transcribe(
                 model="whisper-1",
                 file=audio_file,
                 response_format="text"
@@ -196,15 +202,6 @@ Please organize the information into these sections and return ONLY a valid JSON
 For each field, extract ALL relevant information from the transcript using numbered points. Use direct quotes where applicable and be as comprehensive as possible. If no information is available for a field, use an empty string.
 """
 
-        response = openai_client.chat.completions.create(
-            model="gpt-4",
-            messages=[
-                {"role": "system", "content": "You are a professional assistant that extracts structured information from training session transcripts. Always return valid JSON."},
-                {"role": "user", "content": prompt}
-            ],
-            temperature=0.3
-        )
-        
         # Parse the JSON response
         import json
         
@@ -225,6 +222,15 @@ For each field, extract ALL relevant information from the transcript using numbe
                 "next_steps": "1. Implement new scheduling protocols\n2. Begin recruitment for additional staff\n3. Finalize equipment purchase decisions"
             }
         else:
+            # Real OpenAI processing with legacy API
+            response = openai_client.ChatCompletion.create(
+                model="gpt-4",
+                messages=[
+                    {"role": "system", "content": "You are a professional assistant that extracts structured information from training session transcripts. Always return valid JSON."},
+                    {"role": "user", "content": prompt}
+                ],
+                temperature=0.3
+            )
             report_data = json.loads(response.choices[0].message.content)
         
         # Validate that all expected keys are present
