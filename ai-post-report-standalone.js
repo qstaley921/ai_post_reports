@@ -26,7 +26,7 @@ class AIPostReport {
         
         this.isProcessing = false;
         this.abortController = null;
-        this.isDemoOnly = window.location.hostname === 'qstaley921.github.io' || window.location.hostname.includes('github.io');
+        this.isDemoOnly = false; // Now GitHub Pages connects to real AI backend
         
         this.init();
     }
@@ -38,7 +38,8 @@ class AIPostReport {
         if (hostname === 'localhost' || hostname === '127.0.0.1') {
             return 'http://localhost:8000';
         } else if (hostname.includes('github.io')) {
-            return null; // GitHub Pages - demo mode only
+            // GitHub Pages - connect to Render backend for real AI processing
+            return 'https://ai-post-reports.onrender.com';
         } else if (hostname.includes('render.com') || hostname.includes('onrender.com')) {
             // For Render.com deployments, backend will be on same domain with different subdomain
             return `https://ai-post-report-backend.onrender.com`;
@@ -59,8 +60,8 @@ class AIPostReport {
         this.fileInput.addEventListener('change', () => this.handleFileSelect());
         
         // Show appropriate status based on hosting
-        if (this.isDemoOnly) {
-            this.updateStatus('🌐 GitHub Pages Demo - UI preview only. Backend integration requires local setup or cloud deployment.');
+        if (window.location.hostname.includes('github.io')) {
+            this.updateStatus('🌐 GitHub Pages + Render.com AI - Real AI processing available! Upload an audio file to get started.');
         } else if (this.apiBaseUrl) {
             this.updateStatus('🤖 Real AI Processing Ready - Upload an audio file to transcribe and organize your training report.');
         } else {
