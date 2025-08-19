@@ -8,12 +8,20 @@ console.log('AI Post Report JavaScript loaded successfully!');
 class AIPostReport {
     constructor() {
         this.apiBaseUrl = 'http://localhost:8000'; // FastAPI backend URL
-        this.fileInput = document.getElementById('ai-audio-input');
+        this.fileInput = document.getElementById('ai-audio-file');
         this.uploadBtn = document.getElementById('ai-audio-upload-btn');
         this.statusEl = document.getElementById('ai-status');
         this.errorEl = document.getElementById('ai-error');
-        this.progressSteps = Array.from(document.querySelectorAll('#ai-progress .ai-step'));
         this.progressBar = document.getElementById('ai-progress-bar');
+        this.progressPercentage = document.getElementById('ai-progress-percentage');
+        
+        // Progress steps with new IDs
+        this.progressSteps = {
+            upload: document.getElementById('step-upload'),
+            transcribe: document.getElementById('step-transcribe'),
+            analyze: document.getElementById('step-analyze'),
+            complete: document.getElementById('step-complete')
+        };
         
         this.isProcessing = false;
         this.abortController = null;
@@ -22,19 +30,17 @@ class AIPostReport {
     }
     
     init() {
-        // Store original step numbers for reset
-        this.progressSteps.forEach(step => {
-            const indicator = step.querySelector('.ai-step-indicator');
-            if (indicator) {
-                indicator.setAttribute('data-original', indicator.textContent.trim());
-            }
-        });
+        if (!this.uploadBtn || !this.fileInput) {
+            console.error('Required AI Post Report elements not found');
+            return;
+        }
         
         // Event listeners
         this.uploadBtn.addEventListener('click', () => this.handleUploadClick());
         this.fileInput.addEventListener('change', () => this.handleFileSelect());
         
         this.updateStatus('No audio uploaded yet.');
+        console.log('AI Post Report initialized successfully');
     }
     
     handleUploadClick() {
@@ -80,7 +86,7 @@ class AIPostReport {
             this.handleError(error.message);
         } finally {
             this.isProcessing = false;
-            this.updateUploadButton('Upload Audio File', false);
+            this.updateUploadButton('Choose Audio File', false);
         }
     }
     
@@ -91,6 +97,12 @@ class AIPostReport {
         formData.append('file', file);
         
         try {
+            // Step 1: Upload (25%)
+            this.setStepActive('upload');
+            this.updateProgress(25);
+            this.updateStatus('Uploading audio file...');
+            await this.simulateDelay(500); // Small delay for user feedback
+            
             const response = await fetch(`${this.apiBaseUrl}/api/post-report/audio`, {
                 method: 'POST',
                 body: formData,
@@ -102,26 +114,29 @@ class AIPostReport {
                 throw new Error(errorData.detail || `HTTP ${response.status}: ${response.statusText}`);
             }
             
-            this.setStepComplete('upload');
+            // Step 2: Transcribe (50%)
             this.setStepActive('transcribe');
+            this.updateProgress(50);
+            this.updateStatus('Transcribing audio with AI... (Est. 30-60 seconds)');
+            await this.simulateDelay(1500); // Simulate transcription time
+            
+            // Step 3: Analyze (75%)
+            this.setStepActive('analyze');
+            this.updateProgress(75);
+            this.updateStatus('Analyzing content and organizing into report fields... (Est. 15-30 seconds)');
+            await this.simulateDelay(1000); // Simulate analysis time
             
             const result = await response.json();
             
-            this.setStepComplete('transcribe');
-            this.setStepActive('organize');
-            
-            // Small delay to show organization step
-            await new Promise(resolve => setTimeout(resolve, 500));
-            
-            this.setStepComplete('organize');
-            this.setStepActive('pasting');
+            // Step 4: Complete (100%)
+            this.setStepActive('complete');
+            this.updateProgress(100);
+            this.updateStatus('Processing complete! Filling form fields...');
             
             // Inject the data into form fields
             this.injectReportData(result.report_data);
             
-            this.setStepComplete('pasting');
-            this.updateProgress(100);
-            this.updateStatus('Audio processed successfully! Form fields have been updated.');
+            this.updateStatus(`Audio processed successfully! Form fields have been updated. ${result.mode === 'demo' ? '(Demo Mode)' : ''}`);
             
         } catch (error) {
             if (error.name === 'AbortError') {
@@ -130,6 +145,10 @@ class AIPostReport {
                 throw error;
             }
         }
+    }
+    
+    async simulateDelay(ms) {
+        return new Promise(resolve => setTimeout(resolve, ms));
     }
     
     injectReportData(reportData) {
@@ -166,66 +185,83 @@ class AIPostReport {
     }
     
     setStepActive(stepName) {
-        const step = document.querySelector(`.ai-step[data-step="${stepName}"]`);
-        if (!step) return;
+        // Reset all steps
+        Object.keys(this.progressSteps).forEach(key => {
+            const step = this.progressSteps[key];
+            if (step) {
+                step.classList.remove('active');
+            }
+        });
         
-        const indicator = step.querySelector('.ai-step-indicator');
-        indicator.style.borderColor = '#ffd700';
-        indicator.style.color = '#ffd700';
-        indicator.innerHTML = '<span class="fa fa-spinner fa-spin" style="font-size:10px;"></span>';
-    }
-    
-    setStepComplete(stepName) {
-        const step = document.querySelector(`.ai-step[data-step="${stepName}"]`);
-        if (!step) return;
-        
-        const indicator = step.querySelector('.ai-step-indicator');
-        indicator.style.borderColor = '#67b268';
-        indicator.style.color = '#fff';
-        indicator.style.background = '#67b268';
-        indicator.innerHTML = '<span class="fa fa-check" style="font-size:12px;"></span>';
-        
-        // Update progress bar
-        const stepIndex = this.progressSteps.findIndex(s => s.dataset.step === stepName);
-        if (stepIndex >= 0) {
-            const progress = ((stepIndex + 1) / this.progressSteps.length) * 100;
-            this.updateProgress(progress);
+        // Set current step active
+        const currentStep = this.progressSteps[stepName];
+        if (currentStep) {
+            currentStep.classList.add('active');
         }
     }
     
     resetProgress() {
-        this.progressSteps.forEach(step => {
-            const indicator = step.querySelector('.ai-step-indicator');
-            indicator.style.borderColor = '#888';
-            indicator.style.color = '#888';
-            indicator.style.background = '#222';
-            indicator.textContent = indicator.getAttribute('data-original') || indicator.textContent;
+        // Reset all steps
+        Object.keys(this.progressSteps).forEach(key => {
+            const step = this.progressSteps[key];
+            if (step) {
+                step.classList.remove('active');
+            }
         });
+        
         this.updateProgress(0);
     }
     
     updateProgress(percentage) {
-        this.progressBar.style.width = `${percentage}%`;
+        if (this.progressBar) {
+            this.progressBar.style.width = `${percentage}%`;
+        }
+        if (this.progressPercentage) {
+            this.progressPercentage.textContent = `${Math.round(percentage)}%`;
+        }
     }
     
     updateStatus(message) {
-        this.statusEl.textContent = message;
+        if (this.statusEl) {
+            this.statusEl.textContent = message;
+        }
     }
     
     updateUploadButton(text, disabled) {
-        const span = this.uploadBtn.querySelector('span:last-child');
-        if (span) span.textContent = text;
-        this.uploadBtn.disabled = disabled;
-        this.uploadBtn.style.opacity = disabled ? '0.7' : '1';
+        if (this.uploadBtn) {
+            // Find the text node or span within the button
+            const textNodes = Array.from(this.uploadBtn.childNodes).filter(node => 
+                node.nodeType === Node.TEXT_NODE || node.tagName === 'SPAN'
+            );
+            
+            if (textNodes.length > 0) {
+                const lastTextNode = textNodes[textNodes.length - 1];
+                if (lastTextNode.nodeType === Node.TEXT_NODE) {
+                    lastTextNode.textContent = text;
+                } else {
+                    lastTextNode.textContent = text;
+                }
+            } else {
+                // Fallback: just set the whole button text (this might override the icon)
+                this.uploadBtn.innerHTML = `<i class="fas fa-microphone"></i> ${text}`;
+            }
+            
+            this.uploadBtn.disabled = disabled;
+            this.uploadBtn.style.opacity = disabled ? '0.7' : '1';
+        }
     }
     
     showError(message) {
-        this.errorEl.textContent = message;
-        this.errorEl.style.display = 'block';
+        if (this.errorEl) {
+            this.errorEl.textContent = message;
+            this.errorEl.style.display = 'block';
+        }
     }
     
     hideError() {
-        this.errorEl.style.display = 'none';
+        if (this.errorEl) {
+            this.errorEl.style.display = 'none';
+        }
     }
     
     handleError(message) {
@@ -241,7 +277,7 @@ class AIPostReport {
             this.abortController = null;
         }
         this.isProcessing = false;
-        this.updateUploadButton('Upload Audio File', false);
+        this.updateUploadButton('Choose Audio File', false);
         this.updateStatus('Processing cancelled');
         this.resetProgress();
     }
@@ -254,7 +290,16 @@ document.addEventListener('DOMContentLoaded', () => {
         console.log('Initializing AI Post Report...');
         window.aiPostReport = new AIPostReport();
     } else {
-        console.log('AI Post Report elements not found');
+        console.log('AI Post Report elements not found, checking again...');
+        // Try again after a short delay in case elements are dynamically loaded
+        setTimeout(() => {
+            if (document.getElementById('ai-audio-upload-btn')) {
+                console.log('AI Post Report elements found on retry, initializing...');
+                window.aiPostReport = new AIPostReport();
+            } else {
+                console.log('AI Post Report elements still not found');
+            }
+        }, 100);
     }
 });
 

@@ -1,0 +1,404 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>AI Post Report - Training Post-OST Report</title>
+    
+    <!-- Bootstrap CSS -->
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+    
+    <!-- Font Awesome -->
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css">
+    
+    <style>
+        body {
+            font-family: "Poppins", sans-serif;
+            background-color: #f8f9fa;
+            padding: 20px;
+        }
+        
+        .container {
+            max-width: 1000px;
+            margin: 0 auto;
+            background: white;
+            padding: 30px;
+            border-radius: 10px;
+            box-shadow: 0 1px 4px rgba(0,0,0,0.3);
+        }
+        
+        h1 {
+            color: #FF0097;
+            font-size: 28px;
+            margin-bottom: 30px;
+            text-align: center;
+        }
+        
+        h3 {
+            color: #FF0097;
+            margin: 5px 0 10px 0;
+            font-size: 20px;
+            line-height: 1.2em;
+        }
+        
+        h5 {
+            color: #fda63a;
+            font-size: 18px;
+            text-align: center;
+            margin-bottom: 20px;
+        }
+        
+        .report_field_title {
+            font-weight: bold;
+            text-transform: uppercase;
+            font-style: italic;
+        }
+        
+        .report_form_field_title {
+            font-weight: bold;
+            text-transform: uppercase;
+            font-style: italic;
+            color: #fda63a;
+        }
+        
+        .report_form_input {
+            border: 1px solid #fda63a;
+            min-height: 200px;
+            padding: 10px;
+            resize: vertical;
+        }
+        
+        .report_form_input.small_height {
+            min-height: 80px;
+        }
+        
+        /* AI Post Report Styles */
+        #ai-post-report {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            border-radius: 12px;
+            margin-bottom: 30px;
+            padding: 25px;
+            position: relative;
+            overflow: hidden;
+        }
+        
+        #ai-post-report h3 {
+            color: white;
+            margin-bottom: 15px;
+            font-size: 24px;
+        }
+        
+        #ai-post-report p {
+            margin-bottom: 20px;
+            opacity: 0.9;
+            font-size: 16px;
+        }
+        
+        .ai-upload-area {
+            background: rgba(255,255,255,0.1);
+            border: 2px dashed rgba(255,255,255,0.3);
+            border-radius: 8px;
+            padding: 30px;
+            text-align: center;
+            transition: all 0.3s ease;
+            margin-bottom: 20px;
+        }
+        
+        .ai-upload-area:hover {
+            background: rgba(255,255,255,0.15);
+            border-color: rgba(255,255,255,0.5);
+        }
+        
+        #ai-audio-upload-btn {
+            background: #fff;
+            color: #667eea;
+            border: none;
+            padding: 12px 30px;
+            border-radius: 25px;
+            font-weight: 600;
+            font-size: 16px;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            display: inline-flex;
+            align-items: center;
+            gap: 10px;
+        }
+        
+        #ai-audio-upload-btn:hover {
+            background: #f0f0f0;
+            transform: translateY(-2px);
+            box-shadow: 0 5px 15px rgba(0,0,0,0.2);
+        }
+        
+        .ai-progress-container {
+            margin-top: 20px;
+        }
+        
+        .ai-progress-steps {
+            display: flex;
+            justify-content: space-between;
+            margin-bottom: 15px;
+            position: relative;
+        }
+        
+        .ai-progress-step {
+            flex: 1;
+            text-align: center;
+            position: relative;
+            color: rgba(255,255,255,0.6);
+            font-size: 14px;
+            font-weight: 500;
+        }
+        
+        .ai-progress-step.active {
+            color: white;
+        }
+        
+        .ai-progress-step i {
+            display: block;
+            margin-bottom: 8px;
+            font-size: 18px;
+            color: white;
+        }
+        
+        .ai-progress-bar-container {
+            background: rgba(255,255,255,0.2);
+            height: 24px;
+            border-radius: 12px;
+            position: relative;
+            overflow: hidden;
+        }
+        
+        #ai-progress-bar {
+            position: absolute;
+            left: 0;
+            bottom: 0;
+            height: 24px;
+            background: #67b268;
+            width: 0;
+            transition: width .4s ease;
+            border-radius: 12px;
+        }
+        
+        #ai-status {
+            margin-top: 10px;
+            font-size: 13px;
+            color: rgba(255,255,255,0.8);
+            font-style: italic;
+        }
+        
+        #ai-error {
+            display: none;
+            margin-top: 10px;
+            font-size: 13px;
+            color: #ffcccb;
+            font-weight: 600;
+        }
+        
+        .table {
+            margin-bottom: 0;
+        }
+        
+        .table th {
+            background-color: #ffcf86;
+            text-align: center;
+            font-weight: bold;
+        }
+        
+        .table td {
+            vertical-align: top;
+            padding: 15px;
+        }
+        
+        .btn-primary {
+            background-color: #667eea;
+            border-color: #667eea;
+            padding: 12px 30px;
+            font-size: 16px;
+            border-radius: 6px;
+        }
+        
+        .btn-primary:hover {
+            background-color: #5a6fd8;
+            border-color: #5a6fd8;
+        }
+        
+        .text-info {
+            color: #17a2b8 !important;
+        }
+        
+        .fa-info-circle {
+            margin-left: 5px;
+            cursor: help;
+        }
+        
+        #ai-audio-file {
+            display: none;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1><i class="fas fa-microphone-alt"></i> AI Post Report Generator</h1>
+        
+        <!-- AI Post Report Section -->
+        <div id="ai-post-report">
+            <h3><i class="fas fa-robot"></i> AI Audio Transcription & Report Generation</h3>
+            <p>Upload an audio recording of your training session and let AI automatically transcribe it and organize the content into the appropriate form fields below.</p>
+            
+            <div class="ai-upload-area">
+                <button id="ai-audio-upload-btn" type="button">
+                    <i class="fas fa-microphone"></i>
+                    Choose Audio File
+                </button>
+                <input type="file" id="ai-audio-file" accept="audio/*">
+                <p style="margin-top: 15px; margin-bottom: 0; font-size: 14px; opacity: 0.8;">
+                    Supported formats: MP3, WAV, M4A, AAC (Max 50MB)
+                </p>
+            </div>
+            
+            <div class="ai-progress-container">
+                <div class="ai-progress-steps">
+                    <div class="ai-progress-step" id="step-upload">
+                        <i class="fas fa-upload"></i>
+                        <span>Upload</span>
+                    </div>
+                    <div class="ai-progress-step" id="step-transcribe">
+                        <i class="fas fa-file-text"></i>
+                        <span>Transcribe</span>
+                    </div>
+                    <div class="ai-progress-step" id="step-analyze">
+                        <i class="fas fa-brain"></i>
+                        <span>Analyze</span>
+                    </div>
+                    <div class="ai-progress-step" id="step-complete">
+                        <i class="fas fa-check-circle"></i>
+                        <span>Complete</span>
+                    </div>
+                </div>
+                <div class="ai-progress-bar-container">
+                    <div id="ai-progress-bar"></div>
+                    <div id="ai-progress-percentage" style="position: absolute; width: 100%; text-align: center; top: 50%; transform: translateY(-50%); font-size: 13px; color: white; font-weight: 600; text-shadow: 1px 1px 2px rgba(0,0,0,0.7); z-index: 10;">0%</div>
+                </div>
+            </div>
+            <div id="ai-status">No audio uploaded yet.</div>
+            <div id="ai-error"></div>
+        </div>
+
+        <!-- Training Information -->
+        <h5><span class="report_form_field_title">Training Type</span>: 5-Star Telephone</h5>
+        
+        <!-- Post Report Form -->
+        <form id="post_report_form" method="post">
+            <table class="table table-bordered">
+                <thead>
+                    <tr>
+                        <th class="col-md-6" colspan="2"><span class="report_field_title">Training Date:</span> <input type="date" class="form-control d-inline" style="width: auto; display: inline-block;" value="2025-05-20"></th>
+                        <th class="col-md-6" colspan="2"><span class="report_field_title">Trainer:</span> <input type="text" class="form-control d-inline" style="width: auto; display: inline-block;" value="Quentin Staley"></th>
+                    </tr>
+                </thead>
+                <tbody>
+                    <tr>
+                        <td colspan="2">
+                            <span class="report_form_field_title">WINS/CELEBRATIONS</span>
+                            <i class="fa fa-lg fa-info-circle text-info" title="Positive outcomes, improvements, and celebrations from the training session"></i><br>
+                            <textarea name="postost_wins" id="postost_wins" class="form-control report_form_input" placeholder="Document wins, celebrations, and positive outcomes from the training..."></textarea>
+                        </td>
+                        <td colspan="2">
+                            <span class="report_form_field_title">STAT/GOAL REVIEW</span>
+                            <i class="fa fa-lg fa-info-circle text-info" title="Review of statistics, goals, and performance metrics"></i><br>
+                            <textarea name="client_goals" id="client_goals" class="form-control report_form_input" placeholder="Review goals, statistics, and performance metrics..."></textarea>
+                        </td>
+                    </tr>
+                    <tr>
+                        <td colspan="4">
+                            <span class="report_form_field_title">BIGGEST BARRIERS OR ISSUES CLIENT IS STRUGGLING WITH</span>
+                            <i class="fa fa-lg fa-info-circle text-info" title="Main challenges, obstacles, and issues identified during training"></i><br>
+                            <textarea name="postost_holdbacks" id="postost_holdbacks" class="form-control report_form_input" placeholder="Identify barriers, challenges, and issues that need to be addressed..."></textarea>
+                        </td>
+                    </tr>
+                    <tr>
+                        <td colspan="2">
+                            <span class="report_form_field_title">HUMAN CAPITAL</span>
+                            <i class="fa fa-lg fa-info-circle text-info" title="Team capacity, staffing levels, and human resources"></i><br>
+                            <textarea name="human_capital" id="human_capital" class="form-control report_form_input" placeholder="Document team capacity, staffing, and human resources..."></textarea>
+                        </td>
+                        <td colspan="2">
+                            <span class="report_form_field_title">MARKETING</span>
+                            <i class="fa fa-lg fa-info-circle text-info" title="Marketing efforts, campaigns, and promotional activities"></i><br>
+                            <textarea name="marketing" id="marketing" class="form-control report_form_input" placeholder="Document marketing activities and promotional efforts..."></textarea>
+                        </td>
+                    </tr>
+                    <tr>
+                        <td colspan="2">
+                            <span class="report_form_field_title">SPACE AND EQUIPMENT</span>
+                            <i class="fa fa-lg fa-info-circle text-info" title="Physical space, equipment, and facility considerations"></i><br>
+                            <textarea name="space_and_equipment" id="space_and_equipment" class="form-control report_form_input" placeholder="Document space utilization and equipment status..."></textarea>
+                        </td>
+                        <td colspan="2">
+                            <span class="report_form_field_title">CLINICAL DUPLICATION</span>
+                            <i class="fa fa-lg fa-info-circle text-info" title="Clinical processes, duplication efforts, and standardization"></i><br>
+                            <textarea name="clinical_duplication" id="clinical_duplication" class="form-control report_form_input" placeholder="Document clinical processes and standardization efforts..."></textarea>
+                        </td>
+                    </tr>
+                    <tr>
+                        <td colspan="2">
+                            <span class="report_form_field_title">FINANCIAL</span>
+                            <i class="fa fa-lg fa-info-circle text-info" title="Financial status, concerns, and monetary considerations"></i><br>
+                            <textarea name="financial" id="financial" class="form-control report_form_input" placeholder="Document financial status and considerations..."></textarea>
+                        </td>
+                        <td colspan="2">
+                            <span class="report_form_field_title">UPCOMING MILESTONES</span>
+                            <i class="fa fa-lg fa-info-circle text-info" title="Future milestones, goals, and important dates"></i>
+                            <input type="checkbox" name="milestone_request" style="margin-left:10px;transform:scale(1.4)" value="on"> Milestone Request<br>
+                            <textarea name="upcoming_milestones" id="upcoming_milestones" class="form-control report_form_input" placeholder="Document upcoming milestones and important dates..."></textarea>
+                        </td>
+                    </tr>
+                    <tr>
+                        <td colspan="2">
+                            <span class="report_form_field_title">Best Hotel in Area 1</span><br>
+                            <textarea rows="3" name="best_hotel_1" id="best_hotel_1" class="form-control report_form_input small_height" placeholder="Recommend hotels in the area..."></textarea>
+                        </td>
+                        <td colspan="2">
+                            <span class="report_form_field_title">Other Tips for the Area</span>
+                            <i class="fa fa-lg fa-info-circle text-info" title="Local recommendations and area-specific tips"></i><br>
+                            <textarea rows="6" name="other_tips_for_area" id="other_tips_for_area" class="form-control report_form_input" placeholder="Provide local tips and recommendations..."></textarea>
+                        </td>
+                    </tr>
+                    <tr>
+                        <td colspan="4">
+                            <span class="report_form_field_title">Post-OST Report Status</span><br>
+                            <select name="postost_report_status" id="postost_report_status" class="form-control" style="width: 200px;">
+                                <option value="Not Started">Not Started</option>
+                                <option value="In Progress">In Progress</option>
+                                <option value="Completed" selected>Completed</option>
+                            </select>
+                        </td>
+                    </tr>
+                </tbody>
+            </table>
+            
+            <div class="text-center mt-4">
+                <button type="submit" class="btn btn-primary">
+                    <i class="fas fa-save"></i> Save Report
+                </button>
+            </div>
+        </form>
+    </div>
+
+    <!-- Bootstrap JS -->
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
+    
+    <!-- AI Post Report Script -->
+    <script src="ai-post-report-standalone.js"></script>
+    
+    <script>
+        // Form submission handler
+        document.getElementById('post_report_form').addEventListener('submit', function(e) {
+            e.preventDefault();
+            alert('Report saved successfully! In a real implementation, this would submit to your server.');
+        });
+    </script>
+</body>
+</html>

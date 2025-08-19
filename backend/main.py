@@ -142,27 +142,35 @@ async def extract_report_sections(transcript: str) -> Dict[str, str]:
         prompt = f"""
 You are an expert at organizing training post-OST reports. Please analyze the following transcript from a training session and extract information for each of the report sections below. If a section is not mentioned in the transcript, return an empty string for that field.
 
+IMPORTANT INSTRUCTIONS:
+- Use direct quotes from the transcription whenever possible
+- Be as detailed as possible - include all relevant information mentioned
+- List each point using numbered format (1., 2., 3., etc.)
+- Preserve exact numbers, names, and specific details from the transcript
+- Include context and background information when mentioned
+- Do not summarize - provide comprehensive, detailed extraction
+
 Transcript:
 {transcript}
 
 Please organize the information into these sections and return ONLY a valid JSON object with these exact keys:
 
 {{
-    "postost_wins": "WINS/CELEBRATIONS - Notable successes, achievements, improvements, positive outcomes",
-    "client_goals": "STAT/GOAL REVIEW - Baseline numbers, goals, targets, metrics, incentives in place",
-    "postost_holdbacks": "BIGGEST BARRIERS OR ISSUES CLIENT IS STRUGGLING WITH - Problems, challenges, obstacles, concerns",
-    "human_capital": "HUMAN CAPITAL - Staffing levels, team members, capacity, hiring needs",
-    "marketing": "MARKETING - Marketing efforts, campaigns, lead generation, promotional activities",
-    "space_and_equipment": "SPACE AND EQUIPMENT - Physical space, operatories, equipment, capacity constraints",
-    "clinical_duplication": "CLINICAL DUPLICATION - Provider capacity, clinical workflow, scheduling efficiency",
-    "financial": "FINANCIAL - Financial status, budget considerations, payment systems",
-    "upcoming_milestones": "UPCOMING MILESTONES - Future goals, renewal dates, planned trainings, important dates",
-    "homework_doctor": "HOMEWORK FOR DOCTOR - Action items, tasks, commitments for the doctor",
-    "homework_trainer": "HOMEWORK FOR TRAINER - Follow-up actions, tasks for the trainer",
-    "next_steps": "NEXT STEPS - Future actions, planned activities, implementation steps"
+    "postost_wins": "WINS/CELEBRATIONS - Notable successes, achievements, improvements, positive outcomes - use numbered list format",
+    "client_goals": "STAT/GOAL REVIEW - Baseline numbers, goals, targets, metrics, incentives in place - use numbered list format",
+    "postost_holdbacks": "BIGGEST BARRIERS OR ISSUES CLIENT IS STRUGGLING WITH - Problems, challenges, obstacles, concerns - use numbered list format",
+    "human_capital": "HUMAN CAPITAL - Staffing levels, team members, capacity, hiring needs - use numbered list format",
+    "marketing": "MARKETING - Marketing efforts, campaigns, lead generation, promotional activities - use numbered list format",
+    "space_and_equipment": "SPACE AND EQUIPMENT - Physical space, operatories, equipment, capacity constraints - use numbered list format",
+    "clinical_duplication": "CLINICAL DUPLICATION - Provider capacity, clinical workflow, scheduling efficiency - use numbered list format",
+    "financial": "FINANCIAL - Financial status, budget considerations, payment systems - use numbered list format",
+    "upcoming_milestones": "UPCOMING MILESTONES - Future goals, renewal dates, planned trainings, important dates - use numbered list format",
+    "homework_doctor": "HOMEWORK FOR DOCTOR - Action items, tasks, commitments for the doctor - use numbered list format",
+    "homework_trainer": "HOMEWORK FOR TRAINER - Follow-up actions, tasks for the trainer - use numbered list format",
+    "next_steps": "NEXT STEPS - Future actions, planned activities, implementation steps - use numbered list format"
 }}
 
-Extract relevant information for each section from the transcript. Be concise but include important details. Return only the JSON object.
+For each field, extract ALL relevant information from the transcript using numbered points. Use direct quotes where applicable and be as comprehensive as possible. If no information is available for a field, use an empty string.
 """
 
         response = openai_client.chat.completions.create(
