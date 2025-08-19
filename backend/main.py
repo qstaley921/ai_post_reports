@@ -40,11 +40,11 @@ UPLOAD_DIR.mkdir(exist_ok=True)
 # Initialize OpenAI client with error handling
 openai_client = None
 try:
-    if OPENAI_API_KEY:
+    if OPENAI_API_KEY and OPENAI_API_KEY.strip():
         openai_client = openai.OpenAI(api_key=OPENAI_API_KEY)
         print("✅ OpenAI client initialized successfully")
     else:
-        print("⚠️  OPENAI_API_KEY not found - demo mode will be used")
+        print("⚠️  OPENAI_API_KEY not found or empty - demo mode will be used")
 except Exception as e:
     print(f"❌ Failed to initialize OpenAI client: {e}")
     print("🔄 Falling back to demo mode")
