@@ -9,13 +9,14 @@ This repository contains an exported HTML snapshot of a TCal Training Post-OST R
 ## Current State
 Pure front-end placeholder only. Selecting an audio file triggers a timed simulation that marks each step complete and updates a progress bar. No network calls or real transcription yet.
 
-## Planned Architecture
-1. User uploads audio.
-2. Front-end sends `FormData` with audio blob to backend endpoint `/api/post-report/audio`.
-3. Backend:
-   - Stores file (temp storage / S3)
-   - Runs Whisper (OpenAI API or local whisper.cpp) to get transcript
-   - Sends transcript to custom GPT prompt that returns JSON keyed by report section IDs.
+## Planned Architecture (Python Backend + Vanilla JS Frontend)
+1. User uploads audio via vanilla JavaScript file input.
+2. Frontend sends `FormData` with audio blob to Python backend endpoint `/api/post-report/audio`.
+3. **Python Backend** (FastAPI or Flask):
+   - Stores audio file (temp storage or cloud)
+   - Uses OpenAI Whisper API or `whisper` Python library for transcription
+   - Sends transcript to OpenAI GPT API with custom prompt for report field extraction
+   - Returns structured JSON keyed by report section IDs.
 4. Backend responds with JSON like:
 ```json
 {
@@ -33,10 +34,24 @@ Pure front-end placeholder only. Selecting an audio file triggers a timed simula
   "next_steps": "..."
 }
 ```
-5. Front-end iterates keys, injects text into matching `textarea#<id>` fields.
+5. **Vanilla JavaScript Frontend** iterates response keys, injects text into matching `textarea#<id>` fields.
 6. Display completion + allow user edits before final manual submit (existing form post).
 
-## IDs / Field Mapping Extracted
+## Technology Stack
+- **Frontend**: Vanilla JavaScript (no frameworks)
+- **Backend**: Python with FastAPI (recommended) or Flask
+- **AI Services**: 
+  - OpenAI Whisper API for transcription
+  - OpenAI GPT API for text organization/extraction
+- **Storage**: Temporary file storage (local or cloud)
+
+## Next Implementation Steps (Python Focus)
+- Create Python virtual environment and install dependencies (`fastapi`, `openai`, `python-multipart`, etc.)
+- Build FastAPI server with `/api/post-report/audio` endpoint
+- Implement audio file handling, Whisper transcription, and GPT processing
+- Extract inline JavaScript to separate module for real upload & field injection
+- Add error handling & validation for audio file types/sizes
+- Environment configuration for OpenAI API keys
 The HTML already includes field IDs suitable for mapping:
 - postost_wins
 - client_goals
@@ -49,13 +64,7 @@ The HTML already includes field IDs suitable for mapping:
 - upcoming_milestones
 - (Later rows likely include: homework_doctor, homework_trainer, next_steps, etc.)
 
-## Next Implementation Steps
-- Add lightweight JS module to perform real upload & injection.
-- Introduce a backend (Node/Express or Python FastAPI) with two endpoints: upload+process, status/poll (optional for long jobs).
-- Decide on transcription provider (OpenAI Whisper API vs. local model).
-- Craft GPT prompt & response schema; add validation.
-- Error handling & retry UI states.
-- Security: size/type validation, auth token if needed.
+## IDs / Field Mapping Extracted
 
 ## Local Dev Suggestions
 Because `example.html` is a static export, you may want to:
