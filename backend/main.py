@@ -152,12 +152,12 @@ async def transcribe_audio(file_path: str) -> str:
             """
         
         with open(file_path, "rb") as audio_file:
-            # Using legacy OpenAI API (v0.28.0)
-            transcript = openai_client.Audio.transcribe(
+            # Using legacy OpenAI API (v0.28.0) - call directly on module
+            response = openai_client.Audio.transcribe(
                 model="whisper-1",
-                file=audio_file,
-                response_format="text"
+                file=audio_file
             )
+            transcript = response.get('text', str(response))
         return transcript
     except Exception as e:
         logger.error(f"Transcription failed: {str(e)}")
@@ -229,7 +229,7 @@ For each field, extract ALL relevant information from the transcript using numbe
                 ],
                 temperature=0.3
             )
-            report_data = json.loads(response.choices[0].message.content)
+            report_data = json.loads(response.choices[0].message['content'])
         
         # Validate that all expected keys are present
         for key in REPORT_FIELDS.keys():
