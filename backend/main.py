@@ -37,8 +37,18 @@ MAX_FILE_SIZE_BYTES = MAX_FILE_SIZE_MB * 1024 * 1024
 # Ensure upload directory exists
 UPLOAD_DIR.mkdir(exist_ok=True)
 
-# Initialize OpenAI client
-openai_client = openai.OpenAI(api_key=OPENAI_API_KEY)
+# Initialize OpenAI client with error handling
+openai_client = None
+try:
+    if OPENAI_API_KEY:
+        openai_client = openai.OpenAI(api_key=OPENAI_API_KEY)
+        print("✅ OpenAI client initialized successfully")
+    else:
+        print("⚠️  OPENAI_API_KEY not found - demo mode will be used")
+except Exception as e:
+    print(f"❌ Failed to initialize OpenAI client: {e}")
+    print("🔄 Falling back to demo mode")
+    openai_client = None
 
 # Field mapping for the post report form
 REPORT_FIELDS = {
@@ -125,6 +135,19 @@ async def process_audio_upload(file: UploadFile = File(...)):
 async def transcribe_audio(file_path: str) -> str:
     """Transcribe audio file using OpenAI Whisper API"""
     try:
+        if not openai_client:
+            # Demo mode - return sample transcript
+            return """
+            This is a demo transcription. In a real deployment with an OpenAI API key, 
+            this would contain the actual transcription of your uploaded audio file.
+            
+            Sample training session content:
+            - Discussed patient progress and goals
+            - Reviewed marketing strategies 
+            - Identified equipment needs
+            - Planned next steps for the practice
+            """
+        
         with open(file_path, "rb") as audio_file:
             transcript = openai_client.audio.transcriptions.create(
                 model="whisper-1",
@@ -184,7 +207,25 @@ For each field, extract ALL relevant information from the transcript using numbe
         
         # Parse the JSON response
         import json
-        report_data = json.loads(response.choices[0].message.content)
+        
+        if not openai_client:
+            # Demo mode - return sample data
+            report_data = {
+                "postost_wins": "1. Successfully implemented new patient scheduling system\n2. Increased patient satisfaction scores by 15%\n3. Team completed advanced training certification",
+                "client_goals": "1. Target: Increase monthly revenue to $50,000\n2. Goal: See 200 patients per month\n3. Metric: Achieve 95% appointment adherence rate",
+                "postost_holdbacks": "1. Limited operatory space constraining patient flow\n2. Staffing shortage affecting appointment capacity\n3. Insurance processing delays impacting cash flow",
+                "human_capital": "1. Current team: 2 hygienists, 1 assistant\n2. Need to hire: 1 additional dental assistant\n3. Training required: New software system for front desk",
+                "marketing": "1. Social media campaign running on Facebook and Instagram\n2. Referral program showing 20% increase in new patients\n3. Google Ads campaign needs optimization",
+                "space_and_equipment": "1. 4 operatories currently operational\n2. Need new digital X-ray equipment\n3. Waiting room renovation planned for next quarter",
+                "clinical_duplication": "1. Provider seeing 25-30 patients per day\n2. Hygienist capacity at 8-10 patients per day\n3. Same-day emergency slots available",
+                "financial": "1. Monthly overhead: $35,000\n2. Collections rate: 92%\n3. Insurance reimbursement average: 85%",
+                "upcoming_milestones": "1. Quarterly review meeting on March 15th\n2. New equipment installation scheduled for April\n3. Staff training workshop planned for May",
+                "homework_doctor": "1. Review treatment plans for comprehensive cases\n2. Follow up with specialist referrals\n3. Complete continuing education requirements",
+                "homework_trainer": "1. Schedule follow-up coaching session\n2. Provide additional resources for team training\n3. Monitor implementation of new protocols",
+                "next_steps": "1. Implement new scheduling protocols\n2. Begin recruitment for additional staff\n3. Finalize equipment purchase decisions"
+            }
+        else:
+            report_data = json.loads(response.choices[0].message.content)
         
         # Validate that all expected keys are present
         for key in REPORT_FIELDS.keys():
