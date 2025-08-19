@@ -7,7 +7,8 @@ console.log('AI Post Report JavaScript loaded successfully!');
 
 class AIPostReport {
     constructor() {
-        this.apiBaseUrl = 'http://localhost:8000'; // FastAPI backend URL - change for production
+        // Auto-detect API URL based on hosting environment
+        this.apiBaseUrl = this.getApiBaseUrl();
         this.fileInput = document.getElementById('ai-audio-file');
         this.uploadBtn = document.getElementById('ai-audio-upload-btn');
         this.statusEl = document.getElementById('ai-status');
@@ -30,6 +31,23 @@ class AIPostReport {
         this.init();
     }
     
+    getApiBaseUrl() {
+        // Auto-detect API URL based on environment
+        const hostname = window.location.hostname;
+        
+        if (hostname === 'localhost' || hostname === '127.0.0.1') {
+            return 'http://localhost:8000';
+        } else if (hostname.includes('github.io')) {
+            return null; // GitHub Pages - demo mode only
+        } else if (hostname.includes('render.com') || hostname.includes('onrender.com')) {
+            // For Render.com deployments, backend will be on same domain with different subdomain
+            return `https://ai-post-report-backend.onrender.com`;
+        } else {
+            // For custom domains, assume backend is on api subdomain
+            return `https://api.${hostname}`;
+        }
+    }
+    
     init() {
         if (!this.uploadBtn || !this.fileInput) {
             console.error('Required AI Post Report elements not found');
@@ -43,8 +61,10 @@ class AIPostReport {
         // Show appropriate status based on hosting
         if (this.isDemoOnly) {
             this.updateStatus('🌐 GitHub Pages Demo - UI preview only. Backend integration requires local setup or cloud deployment.');
+        } else if (this.apiBaseUrl) {
+            this.updateStatus('🤖 Real AI Processing Ready - Upload an audio file to transcribe and organize your training report.');
         } else {
-            this.updateStatus('No audio uploaded yet.');
+            this.updateStatus('⚠️ Backend not configured - Demo mode only.');
         }
         
         console.log('AI Post Report initialized successfully');

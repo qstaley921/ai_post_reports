@@ -1,0 +1,23 @@
+# Render.com deployment configuration
+services:
+  # Backend API Service
+  - type: web
+    name: ai-post-report-backend
+    env: python
+    buildCommand: "./build.sh"
+    startCommand: "./start.sh"
+    envVars:
+      - key: PYTHON_VERSION
+        value: 3.13.6
+      - key: OPENAI_API_KEY
+        sync: false  # This will need to be set manually in Render dashboard
+    
+  # Frontend Static Site
+  - type: static
+    name: ai-post-report-frontend
+    buildCommand: echo "Static site - no build needed"
+    staticPublishPath: .
+    routes:
+      - type: rewrite
+        source: /*
+        destination: /index.html
