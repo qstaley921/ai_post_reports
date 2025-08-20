@@ -194,6 +194,7 @@ class AIPostReport {
         const fileSizeMB = (fileSize / (1024 * 1024)).toFixed(1);
         let uploadStartTime = Date.now();
         let totalStartTime = Date.now();
+        let processingInterval = null; // Track the interval so we can clean it up
         
         try {
             // Step 1: Starting upload
@@ -224,25 +225,40 @@ class AIPostReport {
             const maxWaitTime = 120; // 2 minutes max
             
             // Show processing feedback every 3 seconds
-            const processingInterval = setInterval(() => {
+            processingInterval = setInterval(() => {
                 waitingTime += 3;
-                const remainingEstimate = Math.max(5, 60 - waitingTime); // Estimate decreases over time
+                const remainingEstimate = Math.max(5, 90 - waitingTime); // Estimate decreases over time
+                let progressValue;
                 
                 if (waitingTime < 30) {
-                    this.updateProgress(25 + (waitingTime / 60) * 35); // Progress from 25% to 60% over 60 seconds
+                    progressValue = 25 + (waitingTime / 60) * 35; // Progress from 25% to 60% over 60 seconds
                     this.updateStatus(`🎤 Server processing audio (${waitingTime}s elapsed, ~${remainingEstimate}s remaining)...`);
                 } else if (waitingTime < 60) {
-                    this.updateProgress(35 + ((waitingTime - 30) / 30) * 25); // Progress from 35% to 60%
+                    progressValue = 35 + ((waitingTime - 30) / 30) * 25; // Progress from 35% to 60%
                     this.updateStatus(`🎤 AI transcribing with OpenAI Whisper (${waitingTime}s elapsed, ~${remainingEstimate}s remaining)...`);
-                } else {
-                    this.updateProgress(60 + ((waitingTime - 60) / 60) * 25); // Progress from 60% to 85%
+                } else if (waitingTime < 120) {
+                    // Cap the progress calculation to prevent going over 95%
+                    const analysisProgress = Math.min((waitingTime - 60) / 60, 1); // 0 to 1 over 60 seconds
+                    progressValue = 60 + (analysisProgress * 35); // Progress from 60% to 95% over 60 seconds
                     this.updateStatus(`🧠 AI analyzing content with GPT-4 (${waitingTime}s elapsed, ~${Math.max(5, 120 - waitingTime)}s remaining)...`);
+                } else {
+                    // After 2 minutes, cap at 95% and show extended processing message
+                    progressValue = 95;
+                    this.updateStatus(`🧠 AI processing taking longer than expected (${waitingTime}s elapsed)... Please wait.`);
                 }
+                
+                // Always cap progress at 95% to never exceed 100% before completion
+                this.updateProgress(Math.min(progressValue, 95));
             }, 3000);
             
             // Wait for the actual response
             const response = await uploadPromise;
-            clearInterval(processingInterval);
+            
+            // Clean up the interval once we get a response (success or failure)
+            if (processingInterval) {
+                clearInterval(processingInterval);
+                processingInterval = null;
+            }
             
             if (!response.ok) {
                 const errorData = await response.json().catch(() => ({}));
@@ -264,10 +280,25 @@ class AIPostReport {
             this.updateStatus(`🎉 Success! Processed ${fileSizeMB} MB in ${totalTime}s. Form fields updated. ${result.mode === 'demo' ? '(Demo Mode)' : '(Real AI Processing)'}`);
             
         } catch (error) {
+            // Clean up the interval if an error occurs
+            if (processingInterval) {
+                clearInterval(processingInterval);
+                processingInterval = null;
+            }
+            
             if (error.name === 'AbortError' || error.message.includes('cancelled')) {
                 this.updateStatus('❌ Upload cancelled by user');
             } else {
-                throw error;
+                // Check if it's a network timeout or server error
+                if (error.message.includes('fetch') || error.message.includes('network') || error.message.includes('timeout')) {
+                    // For network issues, try falling back to demo mode
+                    this.updateStatus('⚠️ Network issue detected. Falling back to demo mode...');
+                    await this.simulateDelay(1000);
+                    await this.showGitHubPagesDemo(file);
+                } else {
+                    // For other errors, re-throw so they get handled by the main error handler
+                    throw error;
+                }
             }
         }
     }
@@ -364,11 +395,14 @@ class AIPostReport {
     }
     
     updateProgress(percentage) {
+        // Ensure progress never exceeds 100%
+        const clampedPercentage = Math.min(Math.max(percentage, 0), 100);
+        
         if (this.progressBar) {
-            this.progressBar.style.width = `${percentage}%`;
+            this.progressBar.style.width = `${clampedPercentage}%`;
         }
         if (this.progressPercentage) {
-            this.progressPercentage.textContent = `${Math.round(percentage)}%`;
+            this.progressPercentage.textContent = `${Math.round(clampedPercentage)}%`;
         }
     }
     
