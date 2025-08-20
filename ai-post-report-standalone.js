@@ -1,6 +1,7 @@
 /**
  * AI Post Report - Vanilla JavaScript Module
  * Handles audio upload, processing, and field injection
+ * Force Update: 2025-08-19 v1.3
  */
 
 console.log('AI Post Report JavaScript loaded successfully!');
