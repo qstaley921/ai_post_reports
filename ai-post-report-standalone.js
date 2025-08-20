@@ -27,7 +27,6 @@ class AIPostReport {
         
         this.isProcessing = false;
         this.abortController = null;
-        this.processingInterval = null;
         this.isDemoOnly = false; // Now GitHub Pages connects to real AI backend
         
         this.init();
@@ -97,7 +96,7 @@ class AIPostReport {
             }
             
             this.isProcessing = true;
-            this.updateUploadButton('Kill Robot', false, true);
+            this.updateUploadButton('Processing...', true);
             this.hideError();
             this.resetProgress();
             
@@ -128,7 +127,7 @@ class AIPostReport {
     
     async showGitHubPagesDemo(file) {
         this.isProcessing = true;
-        this.updateUploadButton('Kill Robot', false, true);
+        this.updateUploadButton('Demo Mode...', true);
         this.hideError();
         this.resetProgress();
         
@@ -195,6 +194,7 @@ class AIPostReport {
         const fileSizeMB = (fileSize / (1024 * 1024)).toFixed(1);
         let uploadStartTime = Date.now();
         let totalStartTime = Date.now();
+        let processingInterval = null; // Track the interval so we can clean it up
         
         try {
             // Step 1: Starting upload
@@ -226,7 +226,7 @@ class AIPostReport {
             let analyzeStepActivated = false;
             
             // Show processing feedback every 3 seconds
-            this.processingInterval = setInterval(() => {
+            processingInterval = setInterval(() => {
                 waitingTime += 3;
                 const remainingEstimate = Math.max(5, 90 - waitingTime); // Estimate decreases over time
                 let progressValue;
@@ -265,9 +265,9 @@ class AIPostReport {
             const response = await uploadPromise;
             
             // Clean up the interval once we get a response (success or failure)
-            if (this.processingInterval) {
-                clearInterval(this.processingInterval);
-                this.processingInterval = null;
+            if (processingInterval) {
+                clearInterval(processingInterval);
+                processingInterval = null;
             }
             
             if (!response.ok) {
@@ -291,9 +291,9 @@ class AIPostReport {
             
         } catch (error) {
             // Clean up the interval if an error occurs
-            if (this.processingInterval) {
-                clearInterval(this.processingInterval);
-                this.processingInterval = null;
+            if (processingInterval) {
+                clearInterval(processingInterval);
+                processingInterval = null;
             }
             
             if (error.name === 'AbortError' || error.message.includes('cancelled')) {
@@ -435,24 +435,23 @@ class AIPostReport {
         }
     }
     
-    updateUploadButton(text, disabled, isKillMode = false) {
+    updateUploadButton(text, disabled) {
         if (this.uploadBtn) {
-            if (isKillMode) {
-                // Kill Robot mode - red button with dead robot icon
-                this.uploadBtn.innerHTML = `<i class="fas fa-robot" style="color: #ff6b6b;"></i> ${text}`;
-                this.uploadBtn.style.backgroundColor = '#dc3545';
-                this.uploadBtn.style.borderColor = '#dc3545';
-                this.uploadBtn.style.color = 'white';
-                this.uploadBtn.classList.add('btn-danger');
-                this.uploadBtn.classList.remove('btn-primary');
+            // Find the text node or span within the button
+            const textNodes = Array.from(this.uploadBtn.childNodes).filter(node => 
+                node.nodeType === Node.TEXT_NODE || node.tagName === 'SPAN'
+            );
+            
+            if (textNodes.length > 0) {
+                const lastTextNode = textNodes[textNodes.length - 1];
+                if (lastTextNode.nodeType === Node.TEXT_NODE) {
+                    lastTextNode.textContent = text;
+                } else {
+                    lastTextNode.textContent = text;
+                }
             } else {
-                // Normal mode - restore original styling
+                // Fallback: just set the whole button text (this might override the icon)
                 this.uploadBtn.innerHTML = `<i class="fas fa-microphone"></i> ${text}`;
-                this.uploadBtn.style.backgroundColor = '';
-                this.uploadBtn.style.borderColor = '';
-                this.uploadBtn.style.color = '';
-                this.uploadBtn.classList.remove('btn-danger');
-                this.uploadBtn.classList.add('btn-primary');
             }
             
             this.uploadBtn.disabled = disabled;
@@ -485,16 +484,9 @@ class AIPostReport {
             this.abortController.abort();
             this.abortController = null;
         }
-        
-        // Clean up the processing interval
-        if (this.processingInterval) {
-            clearInterval(this.processingInterval);
-            this.processingInterval = null;
-        }
-        
         this.isProcessing = false;
         this.updateUploadButton('Choose Audio File', false);
-        this.updateStatus('🤖💀 Robot terminated! Processing stopped by user.');
+        this.updateStatus('Processing cancelled');
         this.resetProgress();
     }
 }
