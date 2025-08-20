@@ -150,43 +150,58 @@ class AIPostReport {
     }
     
     async showGitHubPagesDemo(file) {
-        this.isProcessing = true;
-        this.updateUploadButton('Kill Robot', false, true);
-        this.hideError();
-        this.resetProgress();
-        
-        // Simulate the full process for demo
-        this.updateStatus(`📁 Demo: Processing ${file.name}...`);
-        
-        // Step 1: Upload
-        this.setStepActive('upload');
-        this.updateProgress(25);
-        this.updateStatus('📤 Demo: Uploading audio file...');
-        await this.simulateDelay(800);
-        
-        // Step 2: Transcribe
-        this.setStepActive('transcribe');
-        this.updateProgress(50);
-        this.updateStatus('🎤 Demo: Transcribing audio with AI... (This is a simulation)');
-        await this.simulateDelay(2000);
-        
-        // Step 3: Analyze
-        this.setStepActive('analyze');
-        this.updateProgress(75);
-        this.updateStatus('🧠 Demo: Analyzing content and organizing... (This is a simulation)');
-        await this.simulateDelay(1500);
-        
-        // Step 4: Complete
-        this.setStepActive('complete');
-        this.updateProgress(100);
-        this.updateStatus('✅ Demo: Filling form fields with sample data...');
-        
-        // Inject demo data
-        this.injectDemoData();
-        
-        this.updateStatus('🌟 Demo complete! This shows how the AI would populate the form. For real functionality, deploy the backend or run locally.');
-        this.isProcessing = false;
-        this.updateUploadButton('Choose Audio File', false);
+        try {
+            this.isProcessing = true;
+            this.updateUploadButton('Kill Robot', false, true);
+            this.hideError();
+            this.resetProgress();
+            
+            // Simulate the full process for demo
+            this.updateStatus(`📁 Demo: Processing ${file.name}...`);
+            
+            // Step 1: Upload
+            this.setStepActive('upload');
+            this.updateProgress(25);
+            this.updateStatus('📤 Demo: Uploading audio file...');
+            await this.simulateDelay(800);
+            
+            // Step 2: Transcribe
+            this.setStepActive('transcribe');
+            this.updateProgress(50);
+            this.updateStatus('🎤 Demo: Transcribing audio with AI... (This is a simulation)');
+            await this.simulateDelay(2000);
+            
+            // Step 3: Analyze
+            this.setStepActive('analyze');
+            this.updateProgress(75);
+            this.updateStatus('🧠 Demo: Analyzing content and organizing... (This is a simulation)');
+            await this.simulateDelay(1500);
+            
+            // Step 4: Complete
+            this.setStepActive('complete');
+            this.updateProgress(100);
+            this.updateStatus('✅ Demo: Filling form fields with sample data...');
+            
+            // Inject demo data
+            this.injectDemoData();
+            
+            this.updateStatus('🌟 Demo complete! This shows how the AI would populate the form. For real functionality, deploy the backend or run locally.');
+        } catch (error) {
+            // Handle abort errors gracefully - don't override robot revenge message
+            if (error.message.includes('AbortError') && this.wasManuallyAborted) {
+                // The abort message is already shown, don't override it
+                return;
+            } else {
+                // Handle other errors
+                this.handleError(error.message);
+            }
+        } finally {
+            // Only reset state if this wasn't a manual abort
+            if (!this.wasManuallyAborted) {
+                this.isProcessing = false;
+                this.updateUploadButton('Choose Audio File', false);
+            }
+        }
     }
     
     injectDemoData() {
@@ -347,6 +362,11 @@ class AIPostReport {
         console.log(`Upload simulation: ${steps} steps, ${timePerStep}ms per step`);
         
         for (let i = 0; i < steps; i++) {
+            // Check if we were manually aborted
+            if (this.wasManuallyAborted) {
+                throw new Error('AbortError: Upload progress terminated by user');
+            }
+            
             const currentProgress = 5 + (i * progressPerStep);
             const uploadedMB = ((i + 1) / steps * parseFloat(fileSizeMB)).toFixed(1);
             const remainingTime = Math.ceil((steps - i - 1) * timePerStep / 1000);
@@ -366,7 +386,22 @@ class AIPostReport {
     }
     
     async simulateDelay(ms) {
-        return new Promise(resolve => setTimeout(resolve, ms));
+        return new Promise((resolve, reject) => {
+            const timeout = setTimeout(() => {
+                // Check if we were aborted during the delay
+                if (this.wasManuallyAborted) {
+                    reject(new Error('AbortError: Process was manually terminated'));
+                } else {
+                    resolve();
+                }
+            }, ms);
+            
+            // If already aborted, don't wait
+            if (this.wasManuallyAborted) {
+                clearTimeout(timeout);
+                reject(new Error('AbortError: Process was manually terminated'));
+            }
+        });
     }
     
     injectReportData(reportData) {
