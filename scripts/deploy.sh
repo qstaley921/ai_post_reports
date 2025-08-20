@@ -3,10 +3,9 @@
 # AI Post Report Deployment Script
 echo "🚀 Deploying AI Post Report updates..."
 
-# Check if we're in the right directory (look for README.md and backend directory)
-if [ ! -f "README.md" ] || [ ! -d "backend" ]; then
-    echo "❌ Error: Not in the AI Post Report root directory"
-    echo "Please run from the project root directory"
+# Check if we're in the right directory
+if [ ! -f "index.html" ]; then
+    echo "❌ Error: Not in the AI Post Report directory"
     exit 1
 fi
 
@@ -17,15 +16,14 @@ git add .
 timestamp=$(date "+%Y-%m-%d %H:%M:%S")
 
 # Commit with descriptive message
-git commit -m "v2.7.3: Complete Kill Robot fix - stop all async operations
+git commit -m "v2.5.0: Visual progress improvements + M4A audio format support
 
-- Made simulateDelay abort-aware to stop progress simulation immediately
-- Added abort checks in simulateUploadProgress loop to prevent continued updates
-- Enhanced demo function with proper try-catch and abort handling
-- Progress bar now stops immediately when Kill Robot is clicked
-- Prevented async operations from continuing after abort
-- Robot revenge messages no longer get overridden by delayed error messages
-- Complete termination of all progress simulation and status updates
+- Fixed analyze step activation in progress tracking
+- Added checkmark icons for completed progress steps  
+- Updated active step colors (white instead of dark green)
+- Added pydub for M4A/AAC/OGG to MP3 audio conversion
+- Enhanced error handling for unsupported audio formats
+- Updated to version 2.5.0 with timestamp
 
 Deployment: $timestamp"
 

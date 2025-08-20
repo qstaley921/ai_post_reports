@@ -22,32 +22,16 @@ app.add_middleware(
     allow_headers=["*"],
 )
 
-# Serve static files (JS, CSS, etc.) with cache-busting headers
+# Serve static files (JS, CSS, etc.)
 @app.get("/ai-post-report-standalone.js")
 async def get_js():
     print("📁 Serving ai-post-report-standalone.js")
-    headers = {
-        "Cache-Control": "no-cache, no-store, must-revalidate",
-        "Pragma": "no-cache",
-        "Expires": "0"
-    }
-    return FileResponse("frontend/ai-post-report-standalone.js", media_type="application/javascript", headers=headers)
+    return FileResponse("frontend/ai-post-report-standalone.js", media_type="application/javascript")
 
 @app.get("/favicon.ico")
 async def get_favicon():
     # Return a 204 No Content for favicon requests to avoid 404s
     return Response(status_code=204)
-
-@app.get("/debug/version")
-async def get_version():
-    import os
-    return {
-        "version": "2.7.5", 
-        "build": "50", 
-        "timestamp": "2025-08-20 12:08 PM EST",
-        "working_directory": os.getcwd(),
-        "files_in_frontend": os.listdir("frontend") if os.path.exists("frontend") else "frontend dir not found"
-    }
 
 # Serve the main HTML page for all routes
 @app.get("/", response_class=HTMLResponse)
@@ -55,7 +39,7 @@ async def get_version():
 async def serve_frontend(request: Request, path: str = ""):
     """Serve the main HTML page for all routes (SPA behavior)"""
     print(f"📄 Serving HTML for path: {path}")
-    with open("frontend/index.html", "r", encoding="utf-8") as f:
+    with open("index.html", "r", encoding="utf-8") as f:
         html_content = f.read()
     return HTMLResponse(content=html_content)
 

@@ -16,7 +16,7 @@ source venv/bin/activate
 
 # Install dependencies
 echo "📚 Installing Python dependencies..."
-pip install -r requirements.txt
+pip install -r docs/requirements-backend.txt
 
 # Check for .env file
 if [ ! -f ".env" ]; then
@@ -26,8 +26,8 @@ if [ ! -f ".env" ]; then
     exit 1
 fi
 
-# Create uploads directory
-mkdir -p uploads
+# Create uploads directory if needed (backend creates its own)
+# Backend automatically creates ./uploads directory relative to backend/main.py
 
 # Start the server
 echo "🌟 Starting FastAPI server on http://localhost:8000"

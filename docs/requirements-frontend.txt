@@ -1,0 +1,6 @@
+## Frontend service dependencies (serves static files only)
+# Keep minimal to reduce cold start time
+fastapi==0.115.6
+uvicorn[standard]==0.32.1
+
+# If later adding extras (compression, caching), append here.

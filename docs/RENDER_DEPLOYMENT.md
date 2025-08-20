@@ -9,7 +9,7 @@
 3. **Create a new Web Service**:
    - **Name**: `ai-post-report-backend`
    - **Environment**: `Python 3`
-   - **Build Command**: `pip install --upgrade pip && pip install -r requirements.txt`
+   - **Build Command**: `pip install --upgrade pip && pip install -r requirements-backend.txt`
    - **Start Command**: `uvicorn backend.main:app --host 0.0.0.0 --port $PORT`
    - **Auto-Deploy**: `Yes`
 
@@ -19,16 +19,21 @@
 
 5. **Deploy** - It will take 2-3 minutes
 
-### Step 2: Deploy Frontend (Static Site)
+### Step 2: Deploy Frontend (Web Service)
 
-1. **Create a new Static Site**:
+1. **Create a new Web Service**:
    - **Name**: `ai-post-report-frontend`
-   - **Build Command**: `echo "No build needed"`
-   - **Publish Directory**: `.` (root)
+   - **Environment**: `Python 3`
+   - **Build Command**: `pip install -r requirements-frontend.txt`
+   - **Start Command**: `python frontend/frontend_server.py`
+   - **Auto-Deploy**: `Yes`
 
-2. **Update Backend URL**:
-   - Once backend is deployed, note the URL (e.g., `https://ai-post-report-backend.onrender.com`)
-   - The JavaScript will auto-detect this URL
+2. **Add Environment Variables**:
+   - **PYTHON_VERSION**: `3.13.6`
+
+3. **Backend URL Auto-Detection**:
+   - The JavaScript automatically detects the backend URL
+   - No manual configuration needed
 
 ### Step 3: Test the Application
 
