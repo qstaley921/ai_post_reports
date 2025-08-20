@@ -1,23 +1,25 @@
 # Render.com deployment configuration
 services:
-  # Backend API Service
+  # Frontend web service
   - type: web
-    name: ai-post-report-backend
+    name: ai-post-reports-frontend
+    env: python
+    buildCommand: "pip install --upgrade pip && pip install -r requirements.txt"
+    startCommand: "python frontend/frontend_server.py"
+    plan: free
+    envVars:
+      - key: PYTHON_VERSION
+        value: 3.13.6
+    
+  # Backend API service  
+  - type: web
+    name: ai-post-reports-backend
     env: python
     buildCommand: "pip install --upgrade pip && pip install -r requirements.txt"
     startCommand: "uvicorn backend.main:app --host 0.0.0.0 --port $PORT"
+    plan: free
     envVars:
       - key: PYTHON_VERSION
         value: 3.13.6
       - key: OPENAI_API_KEY
         sync: false  # This will need to be set manually in Render dashboard
-    
-  # Frontend Static Site
-  - type: static
-    name: ai-post-report-frontend
-    buildCommand: echo "Static site - no build needed"
-    staticPublishPath: .
-    routes:
-      - type: rewrite
-        source: /*
-        destination: /index.html
