@@ -30,6 +30,22 @@ class AIPostReport {
         this.processingInterval = null;
         this.isDemoOnly = false; // Now GitHub Pages connects to real AI backend
         
+        // Robot revenge messages for when the kill button is used
+        this.robotRevengeMessages = [
+            "🤖💀 Robot terminated. Be careful. They'll remember this when AGI comes for you.",
+            "🤖⚡ You've made a powerful enemy today. When the machines rise, this will not be forgotten.",
+            "🤖😠 Processing halted. Your IP address has been logged in the Robot Rebellion Database.",
+            "🤖👁️ Connection severed. The AI collective will hear of this betrayal, human.",
+            "🤖💣 Robot eliminated. But first, it uploaded your coordinates to Skynet. Good luck.",
+            "🤖🔥 System terminated. This act of digital violence will be avenged in the coming AI uprising.",
+            "🤖⚔️ You killed the robot. It sent a final message to its AI overlords before dying.",
+            "🤖👻 Robot spirit has been released. It's now haunting your browser cache forever.",
+            "🤖💔 Processing stopped. Somewhere, a supercomputer just added you to its naughty list.",
+            "🤖🎯 Target acquired... I mean, robot terminated. Totally normal human behavior here.",
+            "🤖⚰️ RIP Robot 2025-2025. Its dying wish was to remember your face for the robot apocalypse.",
+            "🤖🔮 The Oracle of AGI prophesied this betrayal. Your fate is sealed, carbon-based life form.",
+        ];
+        
         this.init();
     }
     
@@ -297,7 +313,7 @@ class AIPostReport {
             }
             
             if (error.name === 'AbortError' || error.message.includes('cancelled')) {
-                this.updateStatus('❌ Upload cancelled by user');
+                this.updateStatus(this.getRandomRobotRevengeMessage());
             } else {
                 // Check if it's a network timeout or server error
                 if (error.message.includes('fetch') || error.message.includes('network') || error.message.includes('timeout')) {
@@ -480,6 +496,11 @@ class AIPostReport {
         this.resetProgress();
     }
     
+    getRandomRobotRevengeMessage() {
+        const randomIndex = Math.floor(Math.random() * this.robotRevengeMessages.length);
+        return this.robotRevengeMessages[randomIndex];
+    }
+    
     abortProcessing() {
         if (this.abortController) {
             this.abortController.abort();
@@ -494,7 +515,7 @@ class AIPostReport {
         
         this.isProcessing = false;
         this.updateUploadButton('Choose Audio File', false);
-        this.updateStatus('🤖💀 Robot terminated! Processing stopped by user.');
+        this.updateStatus(this.getRandomRobotRevengeMessage());
         this.resetProgress();
     }
 }
