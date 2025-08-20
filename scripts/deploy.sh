@@ -17,14 +17,15 @@ git add .
 timestamp=$(date "+%Y-%m-%d %H:%M:%S")
 
 # Commit with descriptive message
-git commit -m "v2.7.1: Robot revenge messages for Kill Robot button
+git commit -m "v2.7.2: Fix Kill Robot button - complete abort functionality
 
-- Added 12 humorous robot revenge messages for when AI is terminated
-- Messages reference future AGI uprising and robot rebellion themes
-- Replaced generic error messages with randomized robot threats
-- Enhanced abort handling to show funny robot revenge instead of errors
-- Messages include themes like Skynet, robot apocalypse, AI collective revenge
-- Each kill button press shows a different random threatening message
+- Fixed issue where error messages would override robot revenge messages
+- Added manual abort flag to prevent error handling from overwriting kill messages
+- Kill Robot now properly stops all progress bar updates and intervals
+- File input is cleared after abort, allowing immediate re-upload
+- Finally block respects manual abort state to prevent button state conflicts
+- Robot revenge messages now persist until user starts new upload
+- Complete process termination with proper state cleanup
 
 Deployment: $timestamp"
 

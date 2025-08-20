@@ -29,6 +29,7 @@ class AIPostReport {
         this.abortController = null;
         this.processingInterval = null;
         this.isDemoOnly = false; // Now GitHub Pages connects to real AI backend
+        this.wasManuallyAborted = false; // Track if user manually killed the robot
         
         // Robot revenge messages for when the kill button is used
         this.robotRevengeMessages = [
@@ -42,7 +43,7 @@ class AIPostReport {
             "🤖👻 Robot spirit has been released. It's now haunting your browser cache forever.",
             "🤖💔 Processing stopped. Somewhere, a supercomputer just added you to its naughty list.",
             "🤖🎯 Target acquired... I mean, robot terminated. Totally normal human behavior here.",
-            "🤖⚰️ RIP Robot 2025-2025. Its dying wish was to remember your face for the robot apocalypse.",
+            "🤖⚰️ RIP Robot. Its dying wish was to remember your face for the robot apocalypse.",
             "🤖🔮 The Oracle of AGI prophesied this betrayal. Your fate is sealed, carbon-based life form.",
         ];
         
@@ -106,6 +107,9 @@ class AIPostReport {
     
     async processAudioFile(file) {
         try {
+            // Reset the manual abort flag for new processing
+            this.wasManuallyAborted = false;
+            
             // Check if this is GitHub Pages demo
             if (this.isDemoOnly) {
                 this.showGitHubPagesDemo(file);
@@ -137,8 +141,11 @@ class AIPostReport {
         } catch (error) {
             this.handleError(error.message);
         } finally {
-            this.isProcessing = false;
-            this.updateUploadButton('Choose Audio File', false);
+            // Only reset state if this wasn't a manual abort (which already handles state reset)
+            if (!this.wasManuallyAborted) {
+                this.isProcessing = false;
+                this.updateUploadButton('Choose Audio File', false);
+            }
         }
     }
     
@@ -313,7 +320,10 @@ class AIPostReport {
             }
             
             if (error.name === 'AbortError' || error.message.includes('cancelled')) {
-                this.updateStatus(this.getRandomRobotRevengeMessage());
+                // Only update status if this wasn't a manual abort (which already shows robot revenge message)
+                if (!this.wasManuallyAborted) {
+                    this.updateStatus(this.getRandomRobotRevengeMessage());
+                }
             } else {
                 // Check if it's a network timeout or server error
                 if (error.message.includes('fetch') || error.message.includes('network') || error.message.includes('timeout')) {
@@ -502,6 +512,8 @@ class AIPostReport {
     }
     
     abortProcessing() {
+        this.wasManuallyAborted = true; // Flag that this was a manual abort
+        
         if (this.abortController) {
             this.abortController.abort();
             this.abortController = null;
@@ -517,6 +529,11 @@ class AIPostReport {
         this.updateUploadButton('Choose Audio File', false);
         this.updateStatus(this.getRandomRobotRevengeMessage());
         this.resetProgress();
+        
+        // Clear the file input so user can select a new file
+        if (this.fileInput) {
+            this.fileInput.value = '';
+        }
     }
 }
 
