@@ -2,6 +2,7 @@
 """
 Simple static file server for hosting the AI Post Report frontend on Render.
 This serves the index.html and static assets for the frontend.
+Force deploy: 2025-08-19 23:40
 """
 
 import os
