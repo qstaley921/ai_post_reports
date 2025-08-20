@@ -41,11 +41,13 @@ UPLOAD_DIR.mkdir(exist_ok=True)
 openai_client = None
 try:
     if OPENAI_API_KEY and OPENAI_API_KEY.strip():
-        # Using legacy OpenAI API (v0.28.0) which doesn't have httpx issues
-        import openai
-        openai.api_key = OPENAI_API_KEY
-        openai_client = openai  # Use the module directly
-        print("✅ OpenAI legacy client initialized successfully")
+        # Using modern OpenAI API (v1.35.15) with pinned httpx dependencies
+        openai_client = openai.OpenAI(
+            api_key=OPENAI_API_KEY,
+            timeout=30.0,
+            max_retries=2
+        )
+        print("✅ OpenAI modern client initialized successfully")
     else:
         print("⚠️  OPENAI_API_KEY not found or empty - demo mode will be used")
 except Exception as e:
@@ -152,12 +154,12 @@ async def transcribe_audio(file_path: str) -> str:
             """
         
         with open(file_path, "rb") as audio_file:
-            # Using legacy OpenAI API (v0.28.0) - call directly on module
-            response = openai_client.Audio.transcribe(
+            # Using modern OpenAI API (v1.35.15)
+            transcript = openai_client.audio.transcriptions.create(
                 model="whisper-1",
-                file=audio_file
+                file=audio_file,
+                response_format="text"
             )
-            transcript = response.get('text', str(response))
         return transcript
     except Exception as e:
         logger.error(f"Transcription failed: {str(e)}")
@@ -220,8 +222,8 @@ For each field, extract ALL relevant information from the transcript using numbe
                 "next_steps": "1. Implement new scheduling protocols\n2. Begin recruitment for additional staff\n3. Finalize equipment purchase decisions"
             }
         else:
-            # Real OpenAI processing with legacy API
-            response = openai_client.ChatCompletion.create(
+            # Real OpenAI processing with modern API
+            response = openai_client.chat.completions.create(
                 model="gpt-4",
                 messages=[
                     {"role": "system", "content": "You are a professional assistant that extracts structured information from training session transcripts. Always return valid JSON."},
@@ -229,7 +231,7 @@ For each field, extract ALL relevant information from the transcript using numbe
                 ],
                 temperature=0.3
             )
-            report_data = json.loads(response.choices[0].message['content'])
+            report_data = json.loads(response.choices[0].message.content)
         
         # Validate that all expected keys are present
         for key in REPORT_FIELDS.keys():
