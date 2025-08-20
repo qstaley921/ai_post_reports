@@ -24,6 +24,7 @@ app.add_middleware(
 # Serve static files (JS, CSS, etc.)
 @app.get("/ai-post-report-standalone.js")
 async def get_js():
+    print("📁 Serving ai-post-report-standalone.js")
     return FileResponse("ai-post-report-standalone.js", media_type="application/javascript")
 
 @app.get("/favicon.ico")
@@ -36,6 +37,7 @@ async def get_favicon():
 @app.get("/{path:path}", response_class=HTMLResponse)
 async def serve_frontend(request: Request, path: str = ""):
     """Serve the main HTML page for all routes (SPA behavior)"""
+    print(f"📄 Serving HTML for path: {path}")
     with open("index.html", "r", encoding="utf-8") as f:
         html_content = f.read()
     return HTMLResponse(content=html_content)

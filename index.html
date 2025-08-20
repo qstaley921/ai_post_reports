@@ -443,12 +443,17 @@
     <!-- AI Post Report Script with cache busting -->
         <!-- Load the AI Post Report JavaScript -->
     <script>
-        // Detect if running locally or on GitHub Pages
-        if (window.location.hostname === 'localhost' || window.location.hostname === '127.0.0.1' || window.location.protocol === 'file:') {
-            // Load local version
+        // Detect environment and load appropriate JavaScript
+        const hostname = window.location.hostname;
+        
+        if (hostname === 'localhost' || hostname === '127.0.0.1' || window.location.protocol === 'file:') {
+            // Load local version for development
             document.write('<script src="ai-post-report-standalone.js"><\/script>');
+        } else if (hostname.includes('onrender.com') || hostname.includes('render.com')) {
+            // Load local version for Render hosting
+            document.write('<script src="/ai-post-report-standalone.js"><\/script>');
         } else {
-            // Load from GitHub raw with cache-busting for GitHub Pages
+            // Load from GitHub raw with cache-busting for GitHub Pages or other hosting
             document.write('<script src="https://raw.githubusercontent.com/qstaley921/ai_post_reports/main/ai-post-report-standalone.js?v=' + Date.now() + '"><\/script>');
         }
     </script>
@@ -465,7 +470,7 @@
     <footer class="text-center mt-5 py-3 border-top">
         <small class="text-muted">
             <i class="fas fa-code-branch"></i> 
-            Version 2.4.0 - Updated: Aug 19, 2025 @ 11:24 PM EST
+            Version 2.4.2 - Updated: Aug 19, 2025 @ 11:30 PM EST
         </small>
     </footer>
 </body>
