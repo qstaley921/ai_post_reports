@@ -68,7 +68,7 @@ REPORT_FIELDS = {
 }
 
 def format_report_text(report_data: Dict[str, str]) -> Dict[str, str]:
-    """Format report text with proper line breaks and HTML tags between numbered items"""
+    """Format report text with proper line breaks between numbered items"""
     formatted_data = {}
     
     for key, text in report_data.items():
@@ -76,23 +76,22 @@ def format_report_text(report_data: Dict[str, str]) -> Dict[str, str]:
             formatted_data[key] = text
             continue
             
-        # Split by numbered items (1., 2., 3., etc.)
+        # Split by numbered items ([1], [2], [3], etc.)
         import re
         
-        # Find all numbered items
-        numbered_items = re.split(r'(\d+\.)', text)
+        # Find all numbered items in [1], [2], [3] format
+        numbered_items = re.split(r'(\[\d+\])', text)
         
         if len(numbered_items) <= 2:
-            # No numbered items found, just add double line breaks for any existing line breaks
-            formatted_text = text.replace('\n', '\n\n')
-            formatted_data[key] = formatted_text
+            # No numbered items found, return as-is
+            formatted_data[key] = text
         else:
             # Process numbered items
             formatted_parts = []
             current_item = ""
             
             for i, part in enumerate(numbered_items):
-                if re.match(r'^\d+\.$', part):  # This is a number like "1."
+                if re.match(r'^\[\d+\]$', part):  # This is a number like "[1]"
                     if current_item.strip():  # Save previous item
                         formatted_parts.append(current_item.strip())
                     current_item = part  # Start new item with the number
@@ -103,11 +102,9 @@ def format_report_text(report_data: Dict[str, str]) -> Dict[str, str]:
             if current_item.strip():
                 formatted_parts.append(current_item.strip())
             
-            # Join with double line breaks and HTML <br><br> tags
+            # Join with double line breaks (no HTML tags)
             if formatted_parts:
-                formatted_text = '<br><br>'.join(formatted_parts)
-                # Also add regular line breaks for plain text compatibility
-                formatted_text = formatted_text.replace('<br><br>', '\n\n<br><br>')
+                formatted_text = '\n\n'.join(formatted_parts)
                 formatted_data[key] = formatted_text
             else:
                 formatted_data[key] = text
@@ -259,7 +256,7 @@ You are an expert at organizing training post-OST reports. Please analyze the fo
 IMPORTANT INSTRUCTIONS:
 - Use direct quotes from the transcription whenever possible
 - Be as detailed as possible - include all relevant information mentioned
-- List each point using numbered format (1., 2., 3., etc.)
+- List each point using markdown numbered format: [1], [2], [3], etc.
 - Preserve exact numbers, names, and specific details from the transcript
 - Include context and background information when mentioned
 - Do not summarize - provide comprehensive, detailed extraction
@@ -270,21 +267,21 @@ Transcript:
 Please organize the information into these sections and return ONLY a valid JSON object with these exact keys:
 
 {{
-    "postost_wins": "WINS/CELEBRATIONS - Notable successes, achievements, improvements, positive outcomes - use numbered list format",
-    "client_goals": "STAT/GOAL REVIEW - Baseline numbers, goals, targets, metrics, incentives in place - use numbered list format",
-    "postost_holdbacks": "BIGGEST BARRIERS OR ISSUES CLIENT IS STRUGGLING WITH - Problems, challenges, obstacles, concerns - use numbered list format",
-    "human_capital": "HUMAN CAPITAL - Staffing levels, team members, capacity, hiring needs - use numbered list format",
-    "marketing": "MARKETING - Marketing efforts, campaigns, lead generation, promotional activities - use numbered list format",
-    "space_and_equipment": "SPACE AND EQUIPMENT - Physical space, operatories, equipment, capacity constraints - use numbered list format",
-    "clinical_duplication": "CLINICAL DUPLICATION - Provider capacity, clinical workflow, scheduling efficiency - use numbered list format",
-    "financial": "FINANCIAL - Financial status, budget considerations, payment systems - use numbered list format",
-    "upcoming_milestones": "UPCOMING MILESTONES - Future goals, renewal dates, planned trainings, important dates - use numbered list format",
-    "homework_doctor": "HOMEWORK FOR DOCTOR - Action items, tasks, commitments for the doctor - use numbered list format",
-    "homework_trainer": "HOMEWORK FOR TRAINER - Follow-up actions, tasks for the trainer - use numbered list format",
-    "next_steps": "NEXT STEPS - Future actions, planned activities, implementation steps - use numbered list format"
+    "postost_wins": "WINS/CELEBRATIONS - Notable successes, achievements, improvements, positive outcomes - use [1], [2], [3] format",
+    "client_goals": "STAT/GOAL REVIEW - Baseline numbers, goals, targets, metrics, incentives in place - use [1], [2], [3] format",
+    "postost_holdbacks": "BIGGEST BARRIERS OR ISSUES CLIENT IS STRUGGLING WITH - Problems, challenges, obstacles, concerns - use [1], [2], [3] format",
+    "human_capital": "HUMAN CAPITAL - Staffing levels, team members, capacity, hiring needs - use [1], [2], [3] format",
+    "marketing": "MARKETING - Marketing efforts, campaigns, lead generation, promotional activities - use [1], [2], [3] format",
+    "space_and_equipment": "SPACE AND EQUIPMENT - Physical space, operatories, equipment, capacity constraints - use [1], [2], [3] format",
+    "clinical_duplication": "CLINICAL DUPLICATION - Provider capacity, clinical workflow, scheduling efficiency - use [1], [2], [3] format",
+    "financial": "FINANCIAL - Financial status, budget considerations, payment systems - use [1], [2], [3] format",
+    "upcoming_milestones": "UPCOMING MILESTONES - Future goals, renewal dates, planned trainings, important dates - use [1], [2], [3] format",
+    "homework_doctor": "HOMEWORK FOR DOCTOR - Action items, tasks, commitments for the doctor - use [1], [2], [3] format",
+    "homework_trainer": "HOMEWORK FOR TRAINER - Follow-up actions, tasks for the trainer - use [1], [2], [3] format",
+    "next_steps": "NEXT STEPS - Future actions, planned activities, implementation steps - use [1], [2], [3] format"
 }}
 
-For each field, extract ALL relevant information from the transcript using numbered points. Use direct quotes where applicable and be as comprehensive as possible. If no information is available for a field, use an empty string.
+For each field, extract ALL relevant information from the transcript using [1], [2], [3] numbered points. Use direct quotes where applicable and be as comprehensive as possible. If no information is available for a field, use an empty string.
 """
 
         # Parse the JSON response
@@ -293,18 +290,18 @@ For each field, extract ALL relevant information from the transcript using numbe
         if not api_available:
             # Demo mode - return sample data
             report_data = {
-                "postost_wins": "1. Successfully implemented new patient scheduling system\n2. Increased patient satisfaction scores by 15%\n3. Team completed advanced training certification",
-                "client_goals": "1. Target: Increase monthly revenue to $50,000\n2. Goal: See 200 patients per month\n3. Metric: Achieve 95% appointment adherence rate",
-                "postost_holdbacks": "1. Limited operatory space constraining patient flow\n2. Staffing shortage affecting appointment capacity\n3. Insurance processing delays impacting cash flow",
-                "human_capital": "1. Current team: 2 hygienists, 1 assistant\n2. Need to hire: 1 additional dental assistant\n3. Training required: New software system for front desk",
-                "marketing": "1. Social media campaign running on Facebook and Instagram\n2. Referral program showing 20% increase in new patients\n3. Google Ads campaign needs optimization",
-                "space_and_equipment": "1. 4 operatories currently operational\n2. Need new digital X-ray equipment\n3. Waiting room renovation planned for next quarter",
-                "clinical_duplication": "1. Provider seeing 25-30 patients per day\n2. Hygienist capacity at 8-10 patients per day\n3. Same-day emergency slots available",
-                "financial": "1. Monthly overhead: $35,000\n2. Collections rate: 92%\n3. Insurance reimbursement average: 85%",
-                "upcoming_milestones": "1. Quarterly review meeting on March 15th\n2. New equipment installation scheduled for April\n3. Staff training workshop planned for May",
-                "homework_doctor": "1. Review treatment plans for comprehensive cases\n2. Follow up with specialist referrals\n3. Complete continuing education requirements",
-                "homework_trainer": "1. Schedule follow-up coaching session\n2. Provide additional resources for team training\n3. Monitor implementation of new protocols",
-                "next_steps": "1. Implement new scheduling protocols\n2. Begin recruitment for additional staff\n3. Finalize equipment purchase decisions"
+                "postost_wins": "[1] Successfully implemented new patient scheduling system [2] Increased patient satisfaction scores by 15% [3] Team completed advanced training certification",
+                "client_goals": "[1] Target: Increase monthly revenue to $50,000 [2] Goal: See 200 patients per month [3] Metric: Achieve 95% appointment adherence rate",
+                "postost_holdbacks": "[1] Limited operatory space constraining patient flow [2] Staffing shortage affecting appointment capacity [3] Insurance processing delays impacting cash flow",
+                "human_capital": "[1] Current team: 2 hygienists, 1 assistant [2] Need to hire: 1 additional dental assistant [3] Training required: New software system for front desk",
+                "marketing": "[1] Social media campaign running on Facebook and Instagram [2] Referral program showing 20% increase in new patients [3] Google Ads campaign needs optimization",
+                "space_and_equipment": "[1] 4 operatories currently operational [2] Need new digital X-ray equipment [3] Waiting room renovation planned for next quarter",
+                "clinical_duplication": "[1] Provider seeing 25-30 patients per day [2] Hygienist capacity at 8-10 patients per day [3] Same-day emergency slots available",
+                "financial": "[1] Monthly overhead: $35,000 [2] Collections rate: 92% [3] Insurance reimbursement average: 85%",
+                "upcoming_milestones": "[1] Quarterly review meeting on March 15th [2] New equipment installation scheduled for April [3] Staff training workshop planned for May",
+                "homework_doctor": "[1] Review treatment plans for comprehensive cases [2] Follow up with specialist referrals [3] Complete continuing education requirements",
+                "homework_trainer": "[1] Schedule follow-up coaching session [2] Provide additional resources for team training [3] Monitor implementation of new protocols",
+                "next_steps": "[1] Implement new scheduling protocols [2] Begin recruitment for additional staff [3] Finalize equipment purchase decisions"
             }
         else:
             # Real OpenAI processing with direct HTTP request using urllib

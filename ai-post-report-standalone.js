@@ -188,78 +188,123 @@ class AIPostReport {
         const formData = new FormData();
         formData.append('file', file);
         
+        // Track upload progress and timing
+        const fileSize = file.size;
+        const fileSizeMB = (fileSize / (1024 * 1024)).toFixed(1);
+        let uploadStartTime = Date.now();
+        let uploadedBytes = 0;
+        let estimatedTimeRemaining = 0;
+        
         try {
-            // Step 1: Upload (10%)
+            // Step 1: Starting upload
             this.setStepActive('upload');
-            this.updateProgress(10);
-            this.updateStatus('📤 Uploading audio file to server...');
-            await this.simulateDelay(300);
+            this.updateProgress(5);
+            this.updateStatus(`📤 Starting upload of ${file.name} (${fileSizeMB} MB)...`);
+            await this.simulateDelay(200);
             
-            // Step 1b: Starting upload (15%)
-            this.updateProgress(15);
-            this.updateStatus('📤 Uploading audio file... (preparing for AI processing)');
-            
-            const response = await fetch(`${this.apiBaseUrl}/api/post-report/audio`, {
-                method: 'POST',
-                body: formData,
-                signal: this.abortController.signal
+            // Create XMLHttpRequest for progress tracking
+            const uploadPromise = new Promise((resolve, reject) => {
+                const xhr = new XMLHttpRequest();
+                
+                // Track upload progress
+                xhr.upload.addEventListener('progress', (event) => {
+                    if (event.lengthComputable) {
+                        uploadedBytes = event.loaded;
+                        const uploadedMB = (uploadedBytes / (1024 * 1024)).toFixed(1);
+                        const percentUploaded = (event.loaded / event.total) * 100;
+                        const elapsedTime = (Date.now() - uploadStartTime) / 1000;
+                        
+                        // Calculate upload speed and estimated time remaining
+                        const uploadSpeed = uploadedBytes / elapsedTime; // bytes per second
+                        const remainingBytes = event.total - event.loaded;
+                        estimatedTimeRemaining = Math.ceil(remainingBytes / uploadSpeed);
+                        
+                        // Progress from 5% to 20% during upload
+                        const uploadProgress = 5 + (percentUploaded / 100) * 15;
+                        this.updateProgress(uploadProgress);
+                        
+                        if (estimatedTimeRemaining > 0 && uploadedBytes > 0) {
+                            this.updateStatus(`📤 Uploading ${uploadedMB}/${fileSizeMB} MB... (${estimatedTimeRemaining}s remaining)`);
+                        } else {
+                            this.updateStatus(`📤 Uploading ${uploadedMB}/${fileSizeMB} MB...`);
+                        }
+                    }
+                });
+                
+                xhr.onload = () => {
+                    if (xhr.status >= 200 && xhr.status < 300) {
+                        resolve(JSON.parse(xhr.responseText));
+                    } else {
+                        reject(new Error(`Upload failed: ${xhr.status} ${xhr.statusText}`));
+                    }
+                };
+                
+                xhr.onerror = () => reject(new Error('Upload failed'));
+                xhr.onabort = () => reject(new Error('Upload cancelled'));
+                
+                // Set up abort controller
+                this.abortController.signal.addEventListener('abort', () => {
+                    xhr.abort();
+                });
+                
+                xhr.open('POST', `${this.apiBaseUrl}/api/post-report/audio`);
+                xhr.send(formData);
             });
             
-            if (!response.ok) {
-                const errorData = await response.json().catch(() => ({}));
-                throw new Error(errorData.detail || `HTTP ${response.status}: ${response.statusText}`);
-            }
+            // Step 2: Upload complete, starting AI processing
+            this.updateProgress(20);
+            this.updateStatus(`📤 Upload complete (${fileSizeMB} MB)! Starting AI processing...`);
+            await this.simulateDelay(500);
             
-            // Step 2: Transcription starts (25%)
+            // Step 3: Transcription starts (25%)
             this.setStepActive('transcribe');
             this.updateProgress(25);
-            this.updateStatus('🎤 Audio uploaded! Starting AI transcription with OpenAI Whisper...');
-            await this.simulateDelay(800);
+            this.updateStatus('🎤 Starting AI transcription with OpenAI Whisper...');
             
-            // Step 2b: Transcription in progress (40%)
-            this.updateProgress(40);
-            this.updateStatus('🎤 AI transcribing audio... (this may take 30-90 seconds depending on file length)');
-            await this.simulateDelay(1200);
+            // Simulate transcription time with countdown
+            let transcriptionTime = Math.max(15, Math.min(60, Math.ceil(fileSize / (1024 * 1024) * 8))); // 8 seconds per MB estimate
+            await this.simulateProcessingWithCountdown('🎤 AI transcribing audio', transcriptionTime, 25, 55);
             
-            // Step 2c: Transcription nearly complete (55%)
-            this.updateProgress(55);
-            this.updateStatus('🎤 Transcription nearly complete... preparing for content analysis');
-            await this.simulateDelay(800);
-            
-            // Step 3: Analysis starts (65%)
+            // Step 4: Analysis starts (60%)
             this.setStepActive('analyze');
-            this.updateProgress(65);
+            this.updateProgress(60);
             this.updateStatus('🧠 Transcription complete! Starting AI content analysis with GPT-4...');
-            await this.simulateDelay(600);
             
-            // Step 3b: Analysis in progress (80%)
-            this.updateProgress(80);
-            this.updateStatus('🧠 AI analyzing content and organizing into report sections... (almost done!)');
-            await this.simulateDelay(1000);
+            // Simulate analysis time with countdown
+            let analysisTime = Math.max(10, Math.min(30, Math.ceil(fileSize / (1024 * 1024) * 5))); // 5 seconds per MB estimate
+            await this.simulateProcessingWithCountdown('🧠 AI analyzing content and organizing', analysisTime, 60, 90);
             
-            // Step 3c: Analysis finalizing (90%)
-            this.updateProgress(90);
-            this.updateStatus('🧠 Finalizing analysis and formatting report data...');
-            await this.simulateDelay(400);
+            // Get the actual result
+            const result = await uploadPromise;
             
-            const result = await response.json();
-            
-            // Step 4: Complete (100%)
+            // Step 5: Complete (100%)
             this.setStepActive('complete');
             this.updateProgress(100);
-            this.updateStatus('✅ AI processing complete! Filling form fields with formatted content...');
+            this.updateStatus('✅ AI processing complete! Filling form fields...');
             
             // Inject the data into form fields
             this.injectReportData(result.report_data);
             
-            this.updateStatus(`🎉 Success! Audio processed and form fields updated. ${result.mode === 'demo' ? '(Demo Mode)' : '(Real AI Processing)'}`);
+            const totalTime = Math.ceil((Date.now() - uploadStartTime) / 1000);
+            this.updateStatus(`🎉 Success! Processed ${fileSizeMB} MB in ${totalTime}s. Form fields updated. ${result.mode === 'demo' ? '(Demo Mode)' : '(Real AI Processing)'}`);
             
         } catch (error) {
-            if (error.name === 'AbortError') {
+            if (error.name === 'AbortError' || error.message.includes('cancelled')) {
                 this.updateStatus('❌ Upload cancelled by user');
             } else {
                 throw error;
             }
+        }
+    }
+    
+    async simulateProcessingWithCountdown(baseMessage, totalSeconds, startProgress, endProgress) {
+        const progressIncrement = (endProgress - startProgress) / totalSeconds;
+        
+        for (let i = totalSeconds; i > 0; i--) {
+            const currentProgress = startProgress + (totalSeconds - i) * progressIncrement;
+            this.updateProgress(currentProgress);
+            this.updateStatus(`${baseMessage}... (${i}s remaining)`);
+            await this.simulateDelay(1000);
         }
     }
     
