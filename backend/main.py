@@ -6,7 +6,8 @@ import tempfile
 import shutil
 from pathlib import Path
 from dotenv import load_dotenv
-import openai
+import requests
+import json
 from typing import Dict, Any
 import logging
 
@@ -37,23 +38,17 @@ MAX_FILE_SIZE_BYTES = MAX_FILE_SIZE_MB * 1024 * 1024
 # Ensure upload directory exists
 UPLOAD_DIR.mkdir(exist_ok=True)
 
-# Initialize OpenAI client with error handling
-openai_client = None
-try:
-    if OPENAI_API_KEY and OPENAI_API_KEY.strip():
-        # Using modern OpenAI API (v1.35.15) with pinned httpx dependencies
-        openai_client = openai.OpenAI(
-            api_key=OPENAI_API_KEY,
-            timeout=30.0,
-            max_retries=2
-        )
-        print("✅ OpenAI modern client initialized successfully")
-    else:
-        print("⚠️  OPENAI_API_KEY not found or empty - demo mode will be used")
-except Exception as e:
-    print(f"❌ Failed to initialize OpenAI client: {e}")
-    print("🔄 Falling back to demo mode")
-    openai_client = None
+# OpenAI API endpoints
+OPENAI_TRANSCRIPTION_URL = "https://api.openai.com/v1/audio/transcriptions"
+OPENAI_CHAT_URL = "https://api.openai.com/v1/chat/completions"
+
+# Check OpenAI API key
+if OPENAI_API_KEY and OPENAI_API_KEY.strip():
+    print("✅ OpenAI API key loaded successfully")
+    api_available = True
+else:
+    print("❌ OpenAI API key not found in environment variables")
+    api_available = False
 
 # Field mapping for the post report form
 REPORT_FIELDS = {
@@ -138,9 +133,9 @@ async def process_audio_upload(file: UploadFile = File(...)):
         raise HTTPException(status_code=500, detail=f"Error processing audio: {str(e)}")
 
 async def transcribe_audio(file_path: str) -> str:
-    """Transcribe audio file using OpenAI Whisper API"""
+    """Transcribe audio file using OpenAI Whisper API via direct HTTP request"""
     try:
-        if not openai_client:
+        if not api_available:
             # Demo mode - return sample transcript
             return """
             This is a demo transcription. In a real deployment with an OpenAI API key, 
@@ -153,14 +148,30 @@ async def transcribe_audio(file_path: str) -> str:
             - Planned next steps for the practice
             """
         
+        # Use direct HTTP request to OpenAI API
+        headers = {
+            "Authorization": f"Bearer {OPENAI_API_KEY}"
+        }
+        
         with open(file_path, "rb") as audio_file:
-            # Using modern OpenAI API (v1.35.15)
-            transcript = openai_client.audio.transcriptions.create(
-                model="whisper-1",
-                file=audio_file,
-                response_format="text"
+            files = {
+                "file": audio_file,
+                "model": (None, "whisper-1"),
+                "response_format": (None, "text")
+            }
+            
+            response = requests.post(
+                OPENAI_TRANSCRIPTION_URL,
+                headers=headers,
+                files=files,
+                timeout=60
             )
-        return transcript
+            
+            if response.status_code == 200:
+                return response.text
+            else:
+                raise Exception(f"OpenAI API error: {response.status_code} - {response.text}")
+                
     except Exception as e:
         logger.error(f"Transcription failed: {str(e)}")
         raise HTTPException(status_code=500, detail=f"Transcription failed: {str(e)}")
@@ -205,7 +216,7 @@ For each field, extract ALL relevant information from the transcript using numbe
         # Parse the JSON response
         import json
         
-        if not openai_client:
+        if not api_available:
             # Demo mode - return sample data
             report_data = {
                 "postost_wins": "1. Successfully implemented new patient scheduling system\n2. Increased patient satisfaction scores by 15%\n3. Team completed advanced training certification",
@@ -222,16 +233,33 @@ For each field, extract ALL relevant information from the transcript using numbe
                 "next_steps": "1. Implement new scheduling protocols\n2. Begin recruitment for additional staff\n3. Finalize equipment purchase decisions"
             }
         else:
-            # Real OpenAI processing with modern API
-            response = openai_client.chat.completions.create(
-                model="gpt-4",
-                messages=[
+            # Real OpenAI processing with direct HTTP request
+            headers = {
+                "Authorization": f"Bearer {OPENAI_API_KEY}",
+                "Content-Type": "application/json"
+            }
+            
+            data = {
+                "model": "gpt-4",
+                "messages": [
                     {"role": "system", "content": "You are a professional assistant that extracts structured information from training session transcripts. Always return valid JSON."},
                     {"role": "user", "content": prompt}
                 ],
-                temperature=0.3
+                "temperature": 0.3
+            }
+            
+            response = requests.post(
+                OPENAI_CHAT_URL,
+                headers=headers,
+                json=data,
+                timeout=60
             )
-            report_data = json.loads(response.choices[0].message.content)
+            
+            if response.status_code == 200:
+                response_json = response.json()
+                report_data = json.loads(response_json["choices"][0]["message"]["content"])
+            else:
+                raise Exception(f"OpenAI API error: {response.status_code} - {response.text}")
         
         # Validate that all expected keys are present
         for key in REPORT_FIELDS.keys():
