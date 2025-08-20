@@ -42,8 +42,8 @@ class AIPostReport {
             // GitHub Pages - connect to Render backend for real AI processing
             return 'https://ai-post-reports.onrender.com';
         } else if (hostname.includes('render.com') || hostname.includes('onrender.com')) {
-            // For Render.com deployments, backend will be on same domain with different subdomain
-            return `https://ai-post-report-backend.onrender.com`;
+            // For Render.com deployments, use the existing backend URL
+            return 'https://ai-post-reports.onrender.com';
         } else {
             // For custom domains, assume backend is on api subdomain
             return `https://api.${hostname}`;
