@@ -179,7 +179,7 @@
         }
         
         .ai-progress-step.active {
-            color: #28a745;
+            color: white;
             transform: scale(1.05);
         }
         
@@ -187,21 +187,43 @@
             color: #20c997;
         }
         
+        .step-icon {
+            position: relative;
+            display: inline-block;
+            margin-bottom: 8px;
+        }
+        
         .ai-progress-step i {
             display: block;
-            margin-bottom: 8px;
             font-size: 18px;
             color: rgba(255,255,255,0.7);
             transition: all 0.3s ease;
         }
         
         .ai-progress-step.active i {
-            color: #28a745;
+            color: white;
             transform: scale(1.1);
         }
         
         .ai-progress-step.completed i {
             color: #20c997;
+        }
+        
+        /* Hide original icons for completed steps, show checkmarks */
+        .ai-progress-step .checkmark-icon {
+            display: none;
+            position: absolute;
+            top: 0;
+            left: 50%;
+            transform: translateX(-50%);
+        }
+        
+        .ai-progress-step.completed .original-icon {
+            display: none;
+        }
+        
+        .ai-progress-step.completed .checkmark-icon {
+            display: block !important;
         }
         
         .ai-progress-bar-container {
@@ -311,19 +333,31 @@
             <div class="ai-progress-container">
                 <div class="ai-progress-steps">
                     <div class="ai-progress-step" id="step-upload">
-                        <i class="fas fa-upload"></i>
+                        <div class="step-icon">
+                            <i class="fas fa-upload original-icon"></i>
+                            <i class="fas fa-check checkmark-icon"></i>
+                        </div>
                         <span>Upload</span>
                     </div>
                     <div class="ai-progress-step" id="step-transcribe">
-                        <i class="fas fa-file-text"></i>
+                        <div class="step-icon">
+                            <i class="fas fa-file-text original-icon"></i>
+                            <i class="fas fa-check checkmark-icon"></i>
+                        </div>
                         <span>Transcribe</span>
                     </div>
                     <div class="ai-progress-step" id="step-analyze">
-                        <i class="fas fa-brain"></i>
+                        <div class="step-icon">
+                            <i class="fas fa-brain original-icon"></i>
+                            <i class="fas fa-check checkmark-icon"></i>
+                        </div>
                         <span>Analyze</span>
                     </div>
                     <div class="ai-progress-step" id="step-complete">
-                        <i class="fas fa-check-circle"></i>
+                        <div class="step-icon">
+                            <i class="fas fa-check-circle original-icon"></i>
+                            <i class="fas fa-check checkmark-icon"></i>
+                        </div>
                         <span>Complete</span>
                     </div>
                 </div>
@@ -470,7 +504,7 @@
     <footer class="text-center mt-5 py-3 border-top">
         <small class="text-muted">
             <i class="fas fa-code-branch"></i> 
-            Version 2.4.4 - Updated: Aug 19, 2025 @ 11:42 PM EST (Backend URL Fix)
+            Version 2.5.0 - Updated: Dec 18, 2024 @ 6:30 PM EST (Visual Progress + Audio Format Support)
         </small>
     </footer>
 </body>

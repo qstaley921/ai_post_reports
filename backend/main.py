@@ -11,6 +11,8 @@ import urllib.parse
 import json
 from typing import Dict, Any
 import logging
+from pydub import AudioSegment
+from pydub.exceptions import CouldntDecodeError
 
 # Load environment variables
 load_dotenv()
@@ -147,16 +149,31 @@ async def process_audio_upload(file: UploadFile = File(...)):
         
         logger.info(f"Processing audio file: {file.filename} ({file_size} bytes)")
         
-        # Step 1: Transcribe audio with Whisper
-        transcript = await transcribe_audio(temp_file_path)
+        # Step 1: Convert audio to MP3 if needed (for OpenAI compatibility)
+        audio_file_path = temp_file_path
+        converted_file_path = None
+        
+        # Check if file needs conversion based on extension
+        file_extension = Path(file.filename).suffix.lower()
+        needs_conversion = file_extension not in ['.mp3', '.wav', '.flac', '.webm']
+        
+        if needs_conversion or file_extension in ['.m4a', '.aac', '.ogg']:
+            logger.info(f"Converting {file_extension} to MP3 for OpenAI compatibility")
+            converted_file_path = convert_audio_to_mp3(temp_file_path)
+            audio_file_path = converted_file_path
+        
+        # Step 2: Transcribe audio with Whisper
+        transcript = await transcribe_audio(audio_file_path)
         logger.info(f"Transcription completed: {len(transcript)} characters")
         
-        # Step 2: Extract report sections with GPT
+        # Step 3: Extract report sections with GPT
         report_data = await extract_report_sections(transcript)
         logger.info("Report sections extracted successfully")
         
-        # Clean up temp file
+        # Clean up temp files
         os.unlink(temp_file_path)
+        if converted_file_path and os.path.exists(converted_file_path):
+            os.unlink(converted_file_path)
         
         return JSONResponse(content={
             "success": True,
@@ -166,16 +183,46 @@ async def process_audio_upload(file: UploadFile = File(...)):
         })
         
     except HTTPException:
-        # Clean up temp file if it exists
+        # Clean up temp files if they exist
         if temp_file_path and os.path.exists(temp_file_path):
             os.unlink(temp_file_path)
+        if 'converted_file_path' in locals() and converted_file_path and os.path.exists(converted_file_path):
+            os.unlink(converted_file_path)
         raise
     except Exception as e:
-        # Clean up temp file if it exists
+        # Clean up temp files if they exist
         if temp_file_path and os.path.exists(temp_file_path):
             os.unlink(temp_file_path)
+        if 'converted_file_path' in locals() and converted_file_path and os.path.exists(converted_file_path):
+            os.unlink(converted_file_path)
         logger.error(f"Error processing audio: {str(e)}")
         raise HTTPException(status_code=500, detail=f"Error processing audio: {str(e)}")
+
+def convert_audio_to_mp3(input_path: str) -> str:
+    """
+    Convert audio file to MP3 format for OpenAI compatibility.
+    Returns path to converted MP3 file.
+    """
+    try:
+        # Load the audio file
+        audio = AudioSegment.from_file(input_path)
+        
+        # Create temp MP3 file
+        with tempfile.NamedTemporaryFile(delete=False, suffix='.mp3') as temp_mp3:
+            mp3_path = temp_mp3.name
+        
+        # Export as MP3
+        audio.export(mp3_path, format="mp3")
+        logger.info(f"Converted audio from {input_path} to MP3: {mp3_path}")
+        
+        return mp3_path
+        
+    except CouldntDecodeError as e:
+        logger.error(f"Could not decode audio file {input_path}: {str(e)}")
+        raise HTTPException(status_code=400, detail=f"Unsupported audio format or corrupted file: {str(e)}")
+    except Exception as e:
+        logger.error(f"Error converting audio {input_path}: {str(e)}")
+        raise HTTPException(status_code=500, detail=f"Error converting audio: {str(e)}")
 
 async def transcribe_audio(file_path: str) -> str:
     """Transcribe audio file using OpenAI Whisper API via direct HTTP request"""

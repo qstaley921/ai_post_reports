@@ -223,6 +223,7 @@ class AIPostReport {
             this.setStepActive('transcribe');
             let waitingTime = 0;
             const maxWaitTime = 120; // 2 minutes max
+            let analyzeStepActivated = false;
             
             // Show processing feedback every 3 seconds
             processingInterval = setInterval(() => {
@@ -237,12 +238,21 @@ class AIPostReport {
                     progressValue = 35 + ((waitingTime - 30) / 30) * 25; // Progress from 35% to 60%
                     this.updateStatus(`🎤 AI transcribing with OpenAI Whisper (${waitingTime}s elapsed, ~${remainingEstimate}s remaining)...`);
                 } else if (waitingTime < 120) {
+                    // Activate analyze step when we start AI analysis
+                    if (!analyzeStepActivated) {
+                        this.setStepActive('analyze');
+                        analyzeStepActivated = true;
+                    }
                     // Cap the progress calculation to prevent going over 95%
                     const analysisProgress = Math.min((waitingTime - 60) / 60, 1); // 0 to 1 over 60 seconds
                     progressValue = 60 + (analysisProgress * 35); // Progress from 60% to 95% over 60 seconds
                     this.updateStatus(`🧠 AI analyzing content with GPT-4 (${waitingTime}s elapsed, ~${Math.max(5, 120 - waitingTime)}s remaining)...`);
                 } else {
                     // After 2 minutes, cap at 95% and show extended processing message
+                    if (!analyzeStepActivated) {
+                        this.setStepActive('analyze');
+                        analyzeStepActivated = true;
+                    }
                     progressValue = 95;
                     this.updateStatus(`🧠 AI processing taking longer than expected (${waitingTime}s elapsed)... Please wait.`);
                 }
