@@ -175,17 +175,33 @@
             color: rgba(255,255,255,0.6);
             font-size: 14px;
             font-weight: 500;
+            transition: all 0.3s ease;
         }
         
         .ai-progress-step.active {
-            color: white;
+            color: #28a745;
+            transform: scale(1.05);
+        }
+        
+        .ai-progress-step.completed {
+            color: #20c997;
         }
         
         .ai-progress-step i {
             display: block;
             margin-bottom: 8px;
             font-size: 18px;
-            color: white;
+            color: rgba(255,255,255,0.7);
+            transition: all 0.3s ease;
+        }
+        
+        .ai-progress-step.active i {
+            color: #28a745;
+            transform: scale(1.1);
+        }
+        
+        .ai-progress-step.completed i {
+            color: #20c997;
         }
         
         .ai-progress-bar-container {

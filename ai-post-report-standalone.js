@@ -367,13 +367,26 @@ class AIPostReport {
     }
     
     setStepActive(stepName) {
-        // Reset all steps
+        // Define the step order for progression tracking
+        const stepOrder = ['upload', 'transcribe', 'analyze', 'complete'];
+        const currentStepIndex = stepOrder.indexOf(stepName);
+        
+        // Reset all steps first
         Object.keys(this.progressSteps).forEach(key => {
             const step = this.progressSteps[key];
             if (step) {
-                step.classList.remove('active');
+                step.classList.remove('active', 'completed');
             }
         });
+        
+        // Mark completed steps (all steps before current)
+        for (let i = 0; i < currentStepIndex; i++) {
+            const stepKey = stepOrder[i];
+            const step = this.progressSteps[stepKey];
+            if (step) {
+                step.classList.add('completed');
+            }
+        }
         
         // Set current step active
         const currentStep = this.progressSteps[stepName];
