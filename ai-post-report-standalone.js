@@ -189,11 +189,15 @@ class AIPostReport {
         formData.append('file', file);
         
         try {
-            // Step 1: Upload (25%)
+            // Step 1: Upload (10%)
             this.setStepActive('upload');
-            this.updateProgress(25);
-            this.updateStatus('Uploading audio file...');
-            await this.simulateDelay(500); // Small delay for user feedback
+            this.updateProgress(10);
+            this.updateStatus('📤 Uploading audio file to server...');
+            await this.simulateDelay(300);
+            
+            // Step 1b: Starting upload (15%)
+            this.updateProgress(15);
+            this.updateStatus('📤 Uploading audio file... (preparing for AI processing)');
             
             const response = await fetch(`${this.apiBaseUrl}/api/post-report/audio`, {
                 method: 'POST',
@@ -206,33 +210,53 @@ class AIPostReport {
                 throw new Error(errorData.detail || `HTTP ${response.status}: ${response.statusText}`);
             }
             
-            // Step 2: Transcribe (50%)
+            // Step 2: Transcription starts (25%)
             this.setStepActive('transcribe');
-            this.updateProgress(50);
-            this.updateStatus('Transcribing audio with AI... (Est. 30-60 seconds)');
-            await this.simulateDelay(1500); // Simulate transcription time
+            this.updateProgress(25);
+            this.updateStatus('🎤 Audio uploaded! Starting AI transcription with OpenAI Whisper...');
+            await this.simulateDelay(800);
             
-            // Step 3: Analyze (75%)
+            // Step 2b: Transcription in progress (40%)
+            this.updateProgress(40);
+            this.updateStatus('🎤 AI transcribing audio... (this may take 30-90 seconds depending on file length)');
+            await this.simulateDelay(1200);
+            
+            // Step 2c: Transcription nearly complete (55%)
+            this.updateProgress(55);
+            this.updateStatus('🎤 Transcription nearly complete... preparing for content analysis');
+            await this.simulateDelay(800);
+            
+            // Step 3: Analysis starts (65%)
             this.setStepActive('analyze');
-            this.updateProgress(75);
-            this.updateStatus('Analyzing content and organizing into report fields... (Est. 15-30 seconds)');
-            await this.simulateDelay(1000); // Simulate analysis time
+            this.updateProgress(65);
+            this.updateStatus('🧠 Transcription complete! Starting AI content analysis with GPT-4...');
+            await this.simulateDelay(600);
+            
+            // Step 3b: Analysis in progress (80%)
+            this.updateProgress(80);
+            this.updateStatus('🧠 AI analyzing content and organizing into report sections... (almost done!)');
+            await this.simulateDelay(1000);
+            
+            // Step 3c: Analysis finalizing (90%)
+            this.updateProgress(90);
+            this.updateStatus('🧠 Finalizing analysis and formatting report data...');
+            await this.simulateDelay(400);
             
             const result = await response.json();
             
             // Step 4: Complete (100%)
             this.setStepActive('complete');
             this.updateProgress(100);
-            this.updateStatus('Processing complete! Filling form fields...');
+            this.updateStatus('✅ AI processing complete! Filling form fields with formatted content...');
             
             // Inject the data into form fields
             this.injectReportData(result.report_data);
             
-            this.updateStatus(`Audio processed successfully! Form fields have been updated. ${result.mode === 'demo' ? '(Demo Mode)' : ''}`);
+            this.updateStatus(`🎉 Success! Audio processed and form fields updated. ${result.mode === 'demo' ? '(Demo Mode)' : '(Real AI Processing)'}`);
             
         } catch (error) {
             if (error.name === 'AbortError') {
-                this.updateStatus('Upload cancelled');
+                this.updateStatus('❌ Upload cancelled by user');
             } else {
                 throw error;
             }

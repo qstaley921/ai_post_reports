@@ -67,6 +67,53 @@ REPORT_FIELDS = {
     "next_steps": "NEXT STEPS"
 }
 
+def format_report_text(report_data: Dict[str, str]) -> Dict[str, str]:
+    """Format report text with proper line breaks and HTML tags between numbered items"""
+    formatted_data = {}
+    
+    for key, text in report_data.items():
+        if not text or not isinstance(text, str):
+            formatted_data[key] = text
+            continue
+            
+        # Split by numbered items (1., 2., 3., etc.)
+        import re
+        
+        # Find all numbered items
+        numbered_items = re.split(r'(\d+\.)', text)
+        
+        if len(numbered_items) <= 2:
+            # No numbered items found, just add double line breaks for any existing line breaks
+            formatted_text = text.replace('\n', '\n\n')
+            formatted_data[key] = formatted_text
+        else:
+            # Process numbered items
+            formatted_parts = []
+            current_item = ""
+            
+            for i, part in enumerate(numbered_items):
+                if re.match(r'^\d+\.$', part):  # This is a number like "1."
+                    if current_item.strip():  # Save previous item
+                        formatted_parts.append(current_item.strip())
+                    current_item = part  # Start new item with the number
+                elif part.strip():  # This is content
+                    current_item += " " + part.strip()
+            
+            # Add the last item
+            if current_item.strip():
+                formatted_parts.append(current_item.strip())
+            
+            # Join with double line breaks and HTML <br><br> tags
+            if formatted_parts:
+                formatted_text = '<br><br>'.join(formatted_parts)
+                # Also add regular line breaks for plain text compatibility
+                formatted_text = formatted_text.replace('<br><br>', '\n\n<br><br>')
+                formatted_data[key] = formatted_text
+            else:
+                formatted_data[key] = text
+    
+    return formatted_data
+
 @app.get("/")
 async def root():
     return {"message": "AI Post Report API is running"}
@@ -295,6 +342,9 @@ For each field, extract ALL relevant information from the transcript using numbe
         for key in REPORT_FIELDS.keys():
             if key not in report_data:
                 report_data[key] = ""
+        
+        # Format the text with proper line breaks and HTML tags
+        report_data = format_report_text(report_data)
         
         return report_data
         
