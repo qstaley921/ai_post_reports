@@ -9,7 +9,7 @@ services:
     plan: free
     envVars:
       - key: PYTHON_VERSION
-        value: 3.13.6
+        value: 3.11.4
     
   # Backend API service  
   - type: web
@@ -20,6 +20,6 @@ services:
     plan: free
     envVars:
       - key: PYTHON_VERSION
-        value: 3.13.6
+        value: 3.11.4
       - key: OPENAI_API_KEY
         sync: false  # This will need to be set manually in Render dashboard
