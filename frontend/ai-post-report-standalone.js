@@ -1,7 +1,7 @@
 /**
  * AI Post Report - Vanilla JavaScript Module
  * Handles audio upload, processing, and field injection
- * Force Update: 2025-08-19 v1.3
+ * Force Update: 2025-08-20 v2.7.4 (Build 44)
  */
 
 console.log('AI Post Report JavaScript loaded successfully!');
@@ -536,6 +536,13 @@ class AIPostReport {
     
     handleError(message) {
         console.error('AI Post Report Error:', message);
+        
+        // If this was a manual abort, don't show error - robot revenge message is already displayed
+        if (message.includes('AbortError') && this.wasManuallyAborted) {
+            // Don't override the robot revenge message that's already showing
+            return;
+        }
+        
         this.showError(message);
         this.updateStatus('Error occurred during processing');
         this.resetProgress();
