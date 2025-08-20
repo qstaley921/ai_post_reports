@@ -6,7 +6,8 @@ import tempfile
 import shutil
 from pathlib import Path
 from dotenv import load_dotenv
-import requests
+import urllib.request
+import urllib.parse
 import json
 from typing import Dict, Any
 import logging
@@ -148,29 +149,55 @@ async def transcribe_audio(file_path: str) -> str:
             - Planned next steps for the practice
             """
         
-        # Use direct HTTP request to OpenAI API
-        headers = {
-            "Authorization": f"Bearer {OPENAI_API_KEY}"
-        }
+        # Use direct HTTP request to OpenAI API with urllib
+        import urllib.request
+        import urllib.parse
         
         with open(file_path, "rb") as audio_file:
-            files = {
-                "file": audio_file,
-                "model": (None, "whisper-1"),
-                "response_format": (None, "text")
-            }
+            # Create multipart form data manually
+            boundary = "----WebKitFormBoundary7MA4YWxkTrZu0gW"
             
-            response = requests.post(
+            # Build multipart body
+            body = []
+            body.append(f"--{boundary}".encode())
+            body.append(b'Content-Disposition: form-data; name="model"')
+            body.append(b"")
+            body.append(b"whisper-1")
+            
+            body.append(f"--{boundary}".encode())
+            body.append(b'Content-Disposition: form-data; name="response_format"')
+            body.append(b"")
+            body.append(b"text")
+            
+            body.append(f"--{boundary}".encode())
+            body.append(b'Content-Disposition: form-data; name="file"; filename="audio.wav"')
+            body.append(b'Content-Type: audio/wav')
+            body.append(b"")
+            body.append(audio_file.read())
+            
+            body.append(f"--{boundary}--".encode())
+            
+            data = b"\r\n".join(body)
+            
+            # Create request
+            req = urllib.request.Request(
                 OPENAI_TRANSCRIPTION_URL,
-                headers=headers,
-                files=files,
-                timeout=60
+                data=data,
+                headers={
+                    "Authorization": f"Bearer {OPENAI_API_KEY}",
+                    "Content-Type": f"multipart/form-data; boundary={boundary}"
+                }
             )
             
-            if response.status_code == 200:
-                return response.text
-            else:
-                raise Exception(f"OpenAI API error: {response.status_code} - {response.text}")
+            try:
+                with urllib.request.urlopen(req, timeout=60) as response:
+                    if response.status == 200:
+                        return response.read().decode('utf-8')
+                    else:
+                        raise Exception(f"OpenAI API error: {response.status}")
+            except urllib.error.HTTPError as e:
+                error_msg = e.read().decode('utf-8') if e.fp else str(e)
+                raise Exception(f"OpenAI API error: {e.code} - {error_msg}")
                 
     except Exception as e:
         logger.error(f"Transcription failed: {str(e)}")
@@ -233,12 +260,7 @@ For each field, extract ALL relevant information from the transcript using numbe
                 "next_steps": "1. Implement new scheduling protocols\n2. Begin recruitment for additional staff\n3. Finalize equipment purchase decisions"
             }
         else:
-            # Real OpenAI processing with direct HTTP request
-            headers = {
-                "Authorization": f"Bearer {OPENAI_API_KEY}",
-                "Content-Type": "application/json"
-            }
-            
+            # Real OpenAI processing with direct HTTP request using urllib
             data = {
                 "model": "gpt-4",
                 "messages": [
@@ -248,18 +270,26 @@ For each field, extract ALL relevant information from the transcript using numbe
                 "temperature": 0.3
             }
             
-            response = requests.post(
+            # Create request with urllib
+            req = urllib.request.Request(
                 OPENAI_CHAT_URL,
-                headers=headers,
-                json=data,
-                timeout=60
+                data=json.dumps(data).encode('utf-8'),
+                headers={
+                    "Authorization": f"Bearer {OPENAI_API_KEY}",
+                    "Content-Type": "application/json"
+                }
             )
             
-            if response.status_code == 200:
-                response_json = response.json()
-                report_data = json.loads(response_json["choices"][0]["message"]["content"])
-            else:
-                raise Exception(f"OpenAI API error: {response.status_code} - {response.text}")
+            try:
+                with urllib.request.urlopen(req, timeout=60) as response:
+                    if response.status == 200:
+                        response_data = json.loads(response.read().decode('utf-8'))
+                        report_data = json.loads(response_data["choices"][0]["message"]["content"])
+                    else:
+                        raise Exception(f"OpenAI API error: {response.status}")
+            except urllib.error.HTTPError as e:
+                error_msg = e.read().decode('utf-8') if e.fp else str(e)
+                raise Exception(f"OpenAI API error: {e.code} - {error_msg}")
         
         # Validate that all expected keys are present
         for key in REPORT_FIELDS.keys():
