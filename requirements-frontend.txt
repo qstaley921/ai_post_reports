@@ -1,0 +1,3 @@
+# Frontend dependencies - minimal FastAPI server for static files
+fastapi==0.115.6
+uvicorn[standard]==0.32.1

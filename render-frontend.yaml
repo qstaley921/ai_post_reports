@@ -1,0 +1,24 @@
+services:
+  # Frontend web service
+  - type: web
+    name: ai-post-reports-frontend
+    env: python
+    buildCommand: "pip install -r requirements.txt"
+    startCommand: "python frontend/frontend_server.py"
+    plan: free
+    envVars:
+      - key: PYTHON_VERSION
+        value: 3.11.4
+    
+  # Backend API service  
+  - type: web
+    name: ai-post-reports-backend
+    env: python
+    buildCommand: "pip install -r requirements.txt"
+    startCommand: "cd backend && python -m uvicorn main:app --host 0.0.0.0 --port $PORT"
+    plan: free
+    envVars:
+      - key: PYTHON_VERSION
+        value: 3.11.4
+      - key: OPENAI_API_KEY
+        sync: false
